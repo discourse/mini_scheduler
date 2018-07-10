@@ -69,15 +69,13 @@ module MiniScheduler
           @mutex.synchronize { info.write! }
 
           if @manager.enable_stats
-            MiniScheduler.perform_with_label.call('default') do
-              stat = MiniScheduler::Stat.create!(
-                name: klass.to_s,
-                hostname: hostname,
-                pid: Process.pid,
-                started_at: Time.now,
-                live_slots_start: GC.stat[:heap_live_slots]
-              )
-            end
+            stat = MiniScheduler::Stat.create!(
+              name: klass.to_s,
+              hostname: hostname,
+              pid: Process.pid,
+              started_at: Time.now,
+              live_slots_start: GC.stat[:heap_live_slots]
+            )
           end
 
           klass.new.perform
@@ -92,15 +90,13 @@ module MiniScheduler
         info.prev_result = failed ? "FAILED" : "OK"
         info.current_owner = nil
         if stat
-          MiniScheduler.perform_with_label.call('default') do
-            stat.update!(
-              duration_ms: duration,
-              live_slots_finish: GC.stat[:heap_live_slots],
-              success: !failed,
-              error: error
-            )
-            MiniScheduler.job_ran&.call(stat)
-          end
+          stat.update!(
+            duration_ms: duration,
+            live_slots_finish: GC.stat[:heap_live_slots],
+            success: !failed,
+            error: error
+          )
+          MiniScheduler.job_ran&.call(stat)
         end
         attempts(3) do
           @mutex.synchronize { info.write! }
@@ -184,7 +180,7 @@ module MiniScheduler
       if options && options.key?(:enable_stats)
         @enable_stats = options[:enable_stats]
       else
-        @enable_stats = !!defined?(MiniScheduler::Stat)
+        @enable_stats = true # doesn't work !!defined?(MiniScheduler::Stat)
       end
     end
 

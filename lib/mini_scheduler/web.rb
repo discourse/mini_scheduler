@@ -22,20 +22,18 @@ module MiniScheduler
       end
 
       app.get "/scheduler" do
-        MiniScheduler.perform_with_label.call('default') do
-          @schedules = Manager.discover_schedules.sort do |a, b|
-            a_next = a.schedule_info.next_run
-            b_next = b.schedule_info.next_run
-            if a_next && b_next
-              a_next <=> b_next
-            elsif a_next
-              -1
-            else
-              1
-            end
+        @schedules = Manager.discover_schedules.sort do |a, b|
+          a_next = a.schedule_info.next_run
+          b_next = b.schedule_info.next_run
+          if a_next && b_next
+            a_next <=> b_next
+          elsif a_next
+            -1
+          else
+            1
           end
-          erb File.read(File.join(VIEWS, 'scheduler.erb')), locals: { view_path: VIEWS }
         end
+        erb File.read(File.join(VIEWS, 'scheduler.erb')), locals: { view_path: VIEWS }
       end
 
       app.get "/scheduler/history" do
@@ -46,14 +44,12 @@ module MiniScheduler
       app.post "/scheduler/:name/trigger" do
         halt 404 unless (name = params[:name])
 
-        MiniScheduler.perform_with_label.call('default') do
-          klass = name.constantize
-          info = klass.schedule_info
-          info.next_run = Time.now.to_i
-          info.write!
+        klass = name.constantize
+        info = klass.schedule_info
+        info.next_run = Time.now.to_i
+        info.write!
 
-          redirect "#{root_path}scheduler"
-        end
+        redirect "#{root_path}scheduler"
       end
 
     end

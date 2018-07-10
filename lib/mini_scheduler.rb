@@ -2,7 +2,6 @@ require "mini_scheduler/engine"
 require 'mini_scheduler/schedule'
 require 'mini_scheduler/schedule_info'
 require 'mini_scheduler/manager'
-require 'mini_scheduler/defer'
 require 'mini_scheduler/distributed_mutex'
 
 require 'sidekiq/exception_handler'
@@ -41,12 +40,6 @@ module MiniScheduler
   def self.job_ran(&blk)
     @job_ran = blk if blk
     @job_ran
-  end
-
-  def self.perform_with_label(&blk)
-    @perform_with_label = blk if blk
-    @perform_with_label ||= Proc.new { |_label, &blk| blk.call if blk }
-    @perform_with_label
   end
 
   def self.start

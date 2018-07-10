@@ -117,24 +117,13 @@ describe MiniScheduler::Manager do
     end
   end
 
-  # context 'with stats model' do
-
-  #   # define the class
-
-  #   it 'can disable stats' do
-  #     manager = MiniScheduler::Manager.new(enable_stats: false)
-  #     expect(manager.enable_stats).to eq(false)
-  #     manager.stop!
-
-  #     manager = MiniScheduler::Manager.new
-  #     expect(manager.enable_stats).to eq(true)
-  #     manager.stop!
-  #   end
-  # end
-
-  it 'disables stats if Stats model was not defined' do
-    manager = MiniScheduler::Manager.new
+  it 'can disable stats' do
+    manager = MiniScheduler::Manager.new(enable_stats: false)
     expect(manager.enable_stats).to eq(false)
+    manager.stop!
+
+    manager = MiniScheduler::Manager.new
+    expect(manager.enable_stats).to eq(true)
     manager.stop!
   end
 
