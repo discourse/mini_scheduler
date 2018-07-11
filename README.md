@@ -45,6 +45,6 @@ end
 Options for schedules:
 
 * **every** followed by a duration in seconds, like "every 1.hour".
-* **daily at: ** followed by a duration since midnight, like "daily at: 12.hours", to run only once per day at a specific time.
+* **daily at:** followed by a duration since midnight, like "daily at: 12.hours", to run only once per day at a specific time.
 
 To view the scheduled jobs, their history, and the schedule, go to sidekiq's web UI and look for the "Scheduler" tab at the top.
