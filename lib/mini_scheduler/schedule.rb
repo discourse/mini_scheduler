@@ -17,7 +17,7 @@ module MiniScheduler::Schedule
     @every
   end
 
-  # schedule job indepndently on each host (looking at hostname)
+  # schedule job independently on each host (looking at hostname)
   def per_host
     @per_host = true
   end

@@ -6,7 +6,7 @@ module MiniScheduler
     class InstallGenerator < ::Rails::Generators::Base
       include Rails::Generators::Migration
       source_root File.expand_path('../templates', __FILE__)
-      desc "Add the migrations for MiniScheduler"
+      desc "Generate files for MiniScheduler"
 
       def self.next_migration_number(path)
         next_migration_number = current_migration_number(path) + 1
@@ -15,6 +15,10 @@ module MiniScheduler
 
       def copy_migrations
         migration_template("create_mini_scheduler_stats.rb", "db/migrate/create_mini_scheduler_stats.rb")
+      end
+
+      def copy_initializer_file
+        copy_file "mini_scheduler_initializer.rb", "config/initializers/mini_scheduler.rb"
       end
     end
   end
