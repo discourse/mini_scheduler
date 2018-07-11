@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Adds recurring jobs for Sidekiq}
   spec.description   = %q{Adds recurring jobs for Sidekiq}
-  spec.homepage      = "https://discourse.org"
+  spec.homepage      = "https://github.com/discourse/mini_scheduler"
   spec.license       = "MIT"
 
   # Specify which files should be added to the gem when it is released.
