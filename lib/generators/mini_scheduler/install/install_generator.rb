@@ -1,5 +1,6 @@
 require 'rails/generators'
 require 'rails/generators/migration'
+require 'active_record'
 
 module MiniScheduler
   module Generators
