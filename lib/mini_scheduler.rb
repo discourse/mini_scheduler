@@ -42,6 +42,11 @@ module MiniScheduler
     @job_ran
   end
 
+  def self.before_sidekiq_web_request(&blk)
+    @before_sidekiq_web_request = blk if blk
+    @before_sidekiq_web_request
+  end
+
   def self.start
     manager = Manager.new
     Manager.discover_schedules.each do |schedule|

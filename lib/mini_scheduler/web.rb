@@ -22,6 +22,7 @@ module MiniScheduler
       end
 
       app.get "/scheduler" do
+        MiniScheduler.before_sidekiq_web_request&.call
         @schedules = Manager.discover_schedules.sort do |a, b|
           a_next = a.schedule_info.next_run
           b_next = b.schedule_info.next_run
@@ -37,12 +38,15 @@ module MiniScheduler
       end
 
       app.get "/scheduler/history" do
+        MiniScheduler.before_sidekiq_web_request&.call
         @scheduler_stats = Stat.order('started_at desc').limit(200)
         erb File.read(File.join(VIEWS, 'history.erb')), locals: { view_path: VIEWS }
       end
 
       app.post "/scheduler/:name/trigger" do
         halt 404 unless (name = params[:name])
+
+        MiniScheduler.before_sidekiq_web_request&.call
 
         klass = name.constantize
         info = klass.schedule_info

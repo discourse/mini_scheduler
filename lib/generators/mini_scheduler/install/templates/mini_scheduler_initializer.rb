@@ -18,6 +18,13 @@ MiniScheduler.configure do |config|
   # config.job_ran do |stats|
   #   ...
   # end
+
+  # Add code that runs before processing requests to the
+  # scheduler pages of the Sidekiq web UI.
+
+  # config.before_sidekiq_web_request do
+  #   ...
+  # end
 end
 
 if Sidekiq.server? && defined?(Rails)
