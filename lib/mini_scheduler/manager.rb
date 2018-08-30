@@ -180,7 +180,7 @@ module MiniScheduler
       if options && options.key?(:enable_stats)
         @enable_stats = options[:enable_stats]
       else
-        @enable_stats = true # doesn't work !!defined?(MiniScheduler::Stat)
+        @enable_stats = !!defined?(MiniScheduler::Stat)
       end
     end
 

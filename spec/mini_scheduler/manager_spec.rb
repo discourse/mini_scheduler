@@ -123,7 +123,7 @@ describe MiniScheduler::Manager do
     manager.stop!
 
     manager = MiniScheduler::Manager.new
-    expect(manager.enable_stats).to eq(true)
+    expect(manager.enable_stats).to eq(false)
     manager.stop!
   end
 
