@@ -19,6 +19,14 @@ MiniScheduler.configure do |config|
   #   ...
   # end
 
+  # Before each tick, the configured block is run to check if the next job
+  # should be scheduled. The block should return a boolean where a return value
+  # of `True` skip scheduling.
+
+  # config.skip_schedule do
+  #   ...
+  # end
+
   # Add code that runs before processing requests to the
   # scheduler pages of the Sidekiq web UI.
 

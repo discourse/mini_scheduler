@@ -47,22 +47,31 @@ module MiniScheduler
     @before_sidekiq_web_request
   end
 
+  def self.skip_schedule(&blk)
+    @skip_schedule = blk if blk
+    @skip_schedule
+  end
+
   def self.start
     manager = Manager.new
+
     Manager.discover_schedules.each do |schedule|
       manager.ensure_schedule!(schedule)
     end
+
     Thread.new do
       while true
         begin
-          manager.tick
+          if !self.skip_schedule || !self.skip_schedule.call
+            manager.tick
+          end
         rescue => e
           # the show must go on
           handle_job_exception(e, message: "While ticking scheduling manager")
         end
+
         sleep 1
       end
     end
   end
-
 end
