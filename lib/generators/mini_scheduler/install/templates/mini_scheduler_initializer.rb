@@ -29,10 +29,6 @@ end
 
 if Sidekiq.server? && defined?(Rails)
   Rails.application.config.after_initialize do
-    scheduler_hostname = ENV["UNICORN_SCHEDULER_HOSTNAME"]
-
-    if !scheduler_hostname || scheduler_hostname.split(',').include?(`hostname`.strip)
-      MiniScheduler.start
-    end
+    MiniScheduler.start
   end
 end
