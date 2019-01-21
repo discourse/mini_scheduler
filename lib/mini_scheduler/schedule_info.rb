@@ -33,7 +33,7 @@ module MiniScheduler
     # this happens automatically after if fire by the manager.
     def valid?
       return false unless @next_run
-      (!@prev_run && @next_run < Time.now.to_i + 5.minutes) || valid_every? || valid_daily?
+      (!@prev_run && @next_run < Time.now.to_i + 300) || valid_every? || valid_daily?
     end
 
     def valid_every?
@@ -59,7 +59,7 @@ module MiniScheduler
       end
 
       if !valid?
-        @next_run = Time.now.to_i + 5.minutes * Random.rand
+        @next_run = Time.now.to_i + 300 * Random.rand
       end
     end
 

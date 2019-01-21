@@ -10,7 +10,8 @@ module MiniScheduler
         @manager = manager
         @reschedule_orphans_thread = Thread.new do
           while !@stopped
-            sleep 1.minute
+            sleep 60
+
             @mutex.synchronize do
               reschedule_orphans
             end

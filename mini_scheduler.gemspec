@@ -22,10 +22,11 @@ Gem::Specification.new do |spec|
   end
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "sidekiq"
+
   spec.add_development_dependency "pg", ">= 1.0"
   spec.add_development_dependency "activesupport", ">= 5.2"
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "mocha"
   spec.add_development_dependency "mock_redis"
-  spec.add_development_dependency "sidekiq"
 end
