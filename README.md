@@ -48,3 +48,7 @@ Options for schedules:
 * **daily at:** followed by a duration since midnight, like "daily at: 12.hours", to run only once per day at a specific time.
 
 To view the scheduled jobs, their history, and the schedule, go to sidekiq's web UI and look for the "Scheduler" tab at the top.
+
+## How to reach us
+
+If you have questions about using mini_scheduler or found a problem, you can find us at https://meta.discourse.org.
