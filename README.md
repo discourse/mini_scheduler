@@ -1,6 +1,11 @@
+[![Build Status](https://travis-ci.org/discourse/mini_scheduler.svg?branch=master)](https://travis-ci.org/discourse/mini_scheduler)
+[![Gem Version](https://badge.fury.io/rb/mini_scheduler.svg)](https://rubygems.org/gems/mini_scheduler)
+
 # mini_scheduler
 
 MiniScheduler adds recurring jobs to [Sidekiq](https://sidekiq.org/).
+
+
 
 ## Installation
 
