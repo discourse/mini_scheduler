@@ -28,5 +28,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "activesupport", ">= 5.2"
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "mocha"
+  spec.add_development_dependency "guard"
+  spec.add_development_dependency "guard-rspec"
   spec.add_development_dependency "mock_redis"
+  spec.add_development_dependency "rake"
 end

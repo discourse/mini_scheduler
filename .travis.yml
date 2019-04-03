@@ -1,0 +1,18 @@
+language: ruby
+rvm:
+  - ruby-head
+  - 2.5
+  - 2.6
+
+before_install:
+  - gem install bundler
+
+cache: bundler
+sudo: false
+
+services:
+  - redis-server
+
+matrix:
+  allow_failures:
+    - rvm: ruby-head
