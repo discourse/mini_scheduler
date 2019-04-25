@@ -82,11 +82,22 @@ module MiniScheduler
       end
     end
 
+    def schedule_async!
+      if ["QUEUED", "RUNNING"].include?(@prev_result)
+        # do not run anytime soon if already running
+        @next_run = 2**31 - 1
+      else
+        @next_run = Time.now.to_i
+      end
+    end
+
     def schedule!
       if @klass.every
         schedule_every!
       elsif @klass.daily
         schedule_daily!
+      elsif @klass.async
+        schedule_async!
       end
 
       write!

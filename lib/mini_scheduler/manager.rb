@@ -30,6 +30,7 @@ module MiniScheduler
             process_queue
           end
         end
+        @async_threads = []
       end
 
       def keep_alive
@@ -58,7 +59,16 @@ module MiniScheduler
         return unless klass
 
         # hack alert, I need to both deq and set @running atomically.
-        @running = true
+        if klass.async
+          @async_threads << Thread.new { run(klass, true) }
+        else
+          @running = true
+          run(klass)
+          @running = false
+        end
+      end
+
+      def run(klass, async = false)
         failed = false
         start = Time.now.to_f
         info = @mutex.synchronize { @manager.schedule_info(klass) }
@@ -81,7 +91,8 @@ module MiniScheduler
 
           klass.new.perform
         rescue => e
-          MiniScheduler.handle_job_exception(e, message: "Running a scheduled job", job: klass)
+          message = async ? "Running an async job" : "Running a scheduled job"
+          MiniScheduler.handle_job_exception(e, message: message, job: klass)
 
           error = "#{e.class}: #{e.message} #{e.backtrace.join("\n")}"
           failed = true
@@ -90,6 +101,10 @@ module MiniScheduler
         info.prev_duration = duration
         info.prev_result = failed ? "FAILED" : "OK"
         info.current_owner = nil
+        if async
+          # restart this job again as soon as possible
+          info.next_run = Time.now.to_i
+        end
         if stat
           stat.update!(
             duration_ms: duration,
@@ -105,7 +120,6 @@ module MiniScheduler
       rescue => ex
         MiniScheduler.handle_job_exception(ex, message: "Processing scheduled job queue")
       ensure
-        @running = false
         if defined?(ActiveRecord::Base)
           ActiveRecord::Base.connection_handler.clear_active_connections!
         end
@@ -119,9 +133,11 @@ module MiniScheduler
 
           @keep_alive_thread.kill
           @reschedule_orphans_thread.kill
+          @async_threads.each(&:kill)
 
           @keep_alive_thread.join
           @reschedule_orphans_thread.join
+          @async_threads.each(&:join)
 
           enq(nil)
 

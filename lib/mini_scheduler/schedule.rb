@@ -32,6 +32,14 @@ module MiniScheduler::Schedule
   end
 
   def scheduled?
-    !!@every || !!@daily
+    !!@every || !!@daily || !!@async
+  end
+
+  # schedule job asynchronously in new thread
+  def async(value = nil)
+    if value != nil
+      @async = value
+    end
+    @async
   end
 end

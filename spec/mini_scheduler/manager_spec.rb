@@ -50,6 +50,25 @@ describe MiniScheduler::Manager do
         self.class.runs += 1
       end
     end
+
+    class AsyncJob
+      extend ::MiniScheduler::Schedule
+
+      async true
+
+      def self.runs=(val)
+        @runs = val
+      end
+
+      def self.runs
+        @runs ||= 0
+      end
+
+      def perform
+        self.class.runs += 1
+        sleep 1000
+      end
+    end
   end
 
   let(:manager) {
@@ -237,6 +256,16 @@ describe MiniScheduler::Manager do
       expect(info.prev_run).to be <= Time.now.to_i
       expect(info.prev_duration).to be > 0
       expect(info.prev_result).to eq("OK")
+    end
+
+    it 'should run async jobs' do
+      Testing::AsyncJob.runs = 0
+
+      manager.ensure_schedule!(Testing::AsyncJob)
+      manager.blocking_tick
+      manager.stop!
+
+      expect(Testing::AsyncJob.runs).to eq(1)
     end
 
   end
