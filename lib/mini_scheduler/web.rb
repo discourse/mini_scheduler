@@ -15,7 +15,7 @@ module MiniScheduler
           return unless duration
           if duration < 1000
             "#{duration}ms"
-          elsif duration < 60 * 1000
+          else
             "#{'%.2f' % (duration / 1000.0)} secs"
           end
         end
