@@ -58,6 +58,9 @@ module MiniScheduler
         @next_run = @prev_run + mixup + @klass.every
       end
 
+      # this can look a bit confusing, but @next_run above could be off
+      # if prev_run is off, so this ensures it ends up correct and in the
+      # future
       if !valid?
         @next_run = Time.now.to_i + 300 * Random.rand
       end
@@ -90,7 +93,6 @@ module MiniScheduler
     end
 
     def write!
-
       clear!
       redis.set key, {
         next_run: @next_run,
