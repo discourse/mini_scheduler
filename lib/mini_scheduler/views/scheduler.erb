@@ -7,16 +7,17 @@
 <div class="container">
   <div class="row">
 
-    <div class="col-md-9">
+    <div class="col-md-12">
       <% if @schedules.length > 0 %>
       <table class="table table-striped table-bordered table-white" style="width: 100%; margin: 0; table-layout:fixed;">
         <thead>
           <th style="width: 30%">Worker</th>
-          <th style="width: 15%">Last Run</th>
-          <th style="width: 15%">Last Result</th>
-          <th style="width: 15%">Last Duration</th>
-          <th style="width: 15%">Last Owner</th>
-          <th style="width: 15%">Next Run Due</th>
+          <th style="width: 10%">Last Run</th>
+          <th style="width: 10%">Last Result</th>
+          <th style="width: 10%">Last Duration</th>
+          <th style="width: 10%">Last Owner</th>
+          <th style="width: 10%">Next Run Due</th>
+          <th style="width: 10%">Queue</th>
           <th style="width: 10%">Actions</th>
         </thead>
         <% @schedules.each do |schedule| %>
@@ -48,6 +49,9 @@
               <% else %>
               <%= relative_time(Time.at(next_run)) %>
               <% end %>
+            </td>
+            <td>
+              <%= schedule.queue %>
             </td>
             <td>
               <form action="<%= "#{root_path}scheduler/#{schedule}/trigger" %>" method="post">

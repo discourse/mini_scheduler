@@ -1,6 +1,6 @@
 module MiniScheduler
   class Manager
-    attr_accessor :random_ratio, :redis, :enable_stats
+    attr_accessor :random_ratio, :redis, :enable_stats, :queue
 
     class Runner
       def initialize(manager)
@@ -168,11 +168,13 @@ module MiniScheduler
     end
 
     def initialize(options = nil)
+      @queue = options && options[:queue] || "default"
+
       @redis = MiniScheduler.redis
       @random_ratio = 0.1
       unless options && options[:skip_runner]
         @runner = Runner.new(self)
-        self.class.current = self
+        self.class.current[@queue] = self
       end
 
       @hostname = options && options[:hostname]
@@ -186,11 +188,7 @@ module MiniScheduler
     end
 
     def self.current
-      @current
-    end
-
-    def self.current=(manager)
-      @current = manager
+      @current ||= {}
     end
 
     def hostname
@@ -225,7 +223,7 @@ module MiniScheduler
     end
 
     def reschedule_orphans_on!(hostname = nil)
-      redis.zrange(Manager.queue_key(hostname), 0, -1).each do |key|
+      redis.zrange(Manager.queue_key(queue, hostname), 0, -1).each do |key|
         klass = get_klass(key)
         next unless klass
         info = schedule_info(klass)
@@ -253,14 +251,14 @@ module MiniScheduler
     end
 
     def schedule_next_job(hostname = nil)
-      (key, due), _ = redis.zrange Manager.queue_key(hostname), 0, 0, withscores: true
+      (key, due), _ = redis.zrange Manager.queue_key(queue, hostname), 0, 0, withscores: true
       return unless key
 
       if due.to_i <= Time.now.to_i
         klass = get_klass(key)
         unless klass
           # corrupt key, nuke it (renamed job or something)
-          redis.zrem Manager.queue_key(hostname), key
+          redis.zrem Manager.queue_key(queue, hostname), key
           return
         end
         info = schedule_info(klass)
@@ -281,7 +279,7 @@ module MiniScheduler
 
     def stop!
       @runner.stop!
-      self.class.current = nil
+      self.class.current.delete(@queue)
     end
 
     def keep_alive_duration
@@ -293,9 +291,13 @@ module MiniScheduler
     end
 
     def lock
-      MiniScheduler::DistributedMutex.synchronize(Manager.lock_key, MiniScheduler.redis) do
+      MiniScheduler::DistributedMutex.synchronize(Manager.lock_key(queue), MiniScheduler.redis) do
         yield
       end
+    end
+
+    def self.discover_queues
+      ObjectSpace.each_object(MiniScheduler::Schedule).map(&:queue).to_set
     end
 
     def self.discover_schedules
@@ -326,15 +328,15 @@ module MiniScheduler
       @identity_key ||= "_scheduler_#{hostname}:#{Process.pid}:#{self.class.seq}:#{SecureRandom.hex}"
     end
 
-    def self.lock_key
-      "_scheduler_lock_"
+    def self.lock_key(queue)
+      "_scheduler_lock_#{queue}_"
     end
 
-    def self.queue_key(hostname = nil)
+    def self.queue_key(queue, hostname = nil)
       if hostname
-        "_scheduler_queue_#{hostname}_"
+        "_scheduler_queue_#{queue}_#{hostname}_"
       else
-        "_scheduler_queue_"
+        "_scheduler_queue_#{queue}_"
       end
     end
 

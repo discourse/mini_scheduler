@@ -120,9 +120,9 @@ module MiniScheduler
 
     def queue_key
       if @klass.is_per_host
-        Manager.queue_key(@manager.hostname)
+        Manager.queue_key(@manager.queue, @manager.hostname)
       else
-        Manager.queue_key
+        Manager.queue_key(@manager.queue)
       end
     end
 
