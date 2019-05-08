@@ -29,7 +29,7 @@ describe MiniScheduler::ScheduleInfo do
 
     after do
       manager.stop!
-      redis.del manager.class.queue_key
+      redis.del manager.class.queue_key("default")
     end
 
     it "is a scheduled job" do
@@ -78,7 +78,7 @@ describe MiniScheduler::ScheduleInfo do
 
     after do
       manager.stop!
-      redis.del manager.class.queue_key
+      redis.del manager.class.queue_key("default")
     end
 
     it "is a scheduled job" do

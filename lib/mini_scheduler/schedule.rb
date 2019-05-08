@@ -1,5 +1,10 @@
 module MiniScheduler::Schedule
 
+  def queue(value = nil)
+    @queue = value.to_s if value
+    @queue ||= "default"
+  end
+
   def daily(options = nil)
     if options
       @daily = options
@@ -10,7 +15,7 @@ module MiniScheduler::Schedule
   def every(duration = nil)
     if duration
       @every = duration
-      if manager = MiniScheduler::Manager.current
+      if manager = MiniScheduler::Manager.current[queue]
         manager.ensure_schedule!(self)
       end
     end

@@ -49,6 +49,7 @@ end
 
 Options for schedules:
 
+* **queue** followed by a queue name, like "queue :email", default queue is "default"
 * **every** followed by a duration in seconds, like "every 1.hour".
 * **daily at:** followed by a duration since midnight, like "daily at: 12.hours", to run only once per day at a specific time.
 

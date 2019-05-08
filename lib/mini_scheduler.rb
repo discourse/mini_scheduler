@@ -52,24 +52,30 @@ module MiniScheduler
   end
 
   def self.start
-    manager = Manager.new
+    schedules = Manager.discover_schedules
 
-    Manager.discover_schedules.each do |schedule|
-      manager.ensure_schedule!(schedule)
-    end
+    Manager.discover_queues.each do |queue|
+      manager = Manager.new(queue: queue)
 
-    Thread.new do
-      while true
-        begin
-          if !self.skip_schedule || !self.skip_schedule.call
-            manager.tick
-          end
-        rescue => e
-          # the show must go on
-          handle_job_exception(e, message: "While ticking scheduling manager")
+      schedules.each do |schedule|
+        if schedule.queue == queue
+          manager.ensure_schedule!(schedule)
         end
+      end
 
-        sleep 1
+      Thread.new do
+        while true
+          begin
+            if !self.skip_schedule || !self.skip_schedule.call
+              manager.tick
+            end
+          rescue => e
+            # the show must go on
+            handle_job_exception(e, message: "While ticking scheduling manager")
+          end
+
+          sleep 1
+        end
       end
     end
   end

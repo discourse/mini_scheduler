@@ -168,9 +168,9 @@ describe MiniScheduler::Manager do
   describe '#tick' do
 
     it 'should nuke missing jobs' do
-      redis.zadd MiniScheduler::Manager.queue_key, Time.now.to_i - 1000, "BLABLA"
+      redis.zadd MiniScheduler::Manager.queue_key("default"), Time.now.to_i - 1000, "BLABLA"
       manager.tick
-      expect(redis.zcard(MiniScheduler::Manager.queue_key)).to eq(0)
+      expect(redis.zcard(MiniScheduler::Manager.queue_key("default"))).to eq(0)
     end
 
     it 'should recover from crashed manager' do
