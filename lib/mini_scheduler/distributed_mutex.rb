@@ -1,5 +1,6 @@
 module MiniScheduler
   class DistributedMutex
+    class Timeout < StandardError; end
 
     @default_redis = nil
 
@@ -18,11 +19,28 @@ module MiniScheduler
       @mutex = Mutex.new
     end
 
+    MAX_POLLING_ATTEMPTS ||= 60
+    BASE_SLEEP_DURATION ||= 0.001
+    MAX_SLEEP_DURATION ||= 1
+
     # NOTE wrapped in mutex to maintain its semantics
     def synchronize
       @mutex.lock
+
+      attempts = 0
+      sleep_duration = BASE_SLEEP_DURATION
       while !try_to_get_lock
-        sleep 0.001
+        sleep sleep_duration
+
+        # Exponential backoff
+        if sleep_duration >= MAX_SLEEP_DURATION
+          sleep_duration = MAX_SLEEP_DURATION
+        else
+          sleep_duration = sleep_duration * 2
+        end
+
+        attempts += 1
+        raise Timeout if attempts >= MAX_POLLING_ATTEMPTS
       end
 
       yield
