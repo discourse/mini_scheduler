@@ -1,3 +1,8 @@
+# 0.11.0 - 24-06-2019
+
+- Correct situation where distributed mutex could end in a tight loop when
+ redis could not be contacted
+
 # 0.9.2 - 26-04-2019
 
 - Correct UI so it displays durations that are longer than a minute
