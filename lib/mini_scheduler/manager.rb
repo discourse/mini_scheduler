@@ -10,6 +10,8 @@ module MiniScheduler
         @mutex = Mutex.new
         @queue = Queue.new
         @manager = manager
+        @hostname = manager.hostname
+
         @reschedule_orphans_thread = Thread.new do
           while !@stopped
             sleep 60
@@ -47,20 +49,17 @@ module MiniScheduler
       end
 
       def hostname
-        @hostname ||= begin
-                        `hostname`
-                      rescue
-                        "unknown"
-                      end
+        @hostname
       end
 
       def process_queue
 
         klass = @queue.deq
-        return unless klass
-
         # hack alert, I need to both deq and set @running atomically.
         @running = true
+
+        return if !klass
+
         failed = false
         start = Time.now.to_f
         info = @mutex.synchronize { @manager.schedule_info(klass) }
@@ -147,7 +146,8 @@ module MiniScheduler
           sleep 0.001
         end
         # this is a hack, but is only used for test anyway
-        sleep 0.001
+        # if tests fail that depend on this we are forced to increase it.
+        sleep 0.010
         while @running
           sleep 0.001
         end
@@ -171,7 +171,6 @@ module MiniScheduler
 
     def initialize(options = nil)
       @queue = options && options[:queue] || "default"
-
       @redis = MiniScheduler.redis
       @random_ratio = 0.1
       unless options && options[:skip_runner]
@@ -194,7 +193,11 @@ module MiniScheduler
     end
 
     def hostname
-      @hostname ||= `hostname`.strip
+      @hostname ||= begin
+                      `hostname`.strip
+                    rescue
+                      "unknown"
+                    end
     end
 
     def schedule_info(klass)

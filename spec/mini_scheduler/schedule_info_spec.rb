@@ -12,6 +12,10 @@ describe MiniScheduler::ScheduleInfo do
     end
   end
 
+  after do
+    manager.stop!
+  end
+
   context "every" do
     class RandomJob
       extend ::MiniScheduler::Schedule

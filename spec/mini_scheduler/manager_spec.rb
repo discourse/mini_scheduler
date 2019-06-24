@@ -60,6 +60,7 @@ describe MiniScheduler::Manager do
   let(:redis) { MockRedis.new }
 
   before do
+
     MiniScheduler.configure do |config|
       config.redis = redis
     end
@@ -121,16 +122,17 @@ describe MiniScheduler::Manager do
   it 'can disable stats' do
     manager = MiniScheduler::Manager.new(enable_stats: false)
     expect(manager.enable_stats).to eq(false)
+
     manager.stop!
 
     manager = MiniScheduler::Manager.new
     expect(manager.enable_stats).to eq(false)
     manager.stop!
+
   end
 
   describe 'per host jobs' do
     it "correctly schedules on multiple hosts" do
-
       freeze_time
 
       Testing::PerHostJob.runs = 0
@@ -175,7 +177,6 @@ describe MiniScheduler::Manager do
     end
 
     it 'should recover from crashed manager' do
-
       info = manager.schedule_info(Testing::SuperLongJob)
       info.next_run = Time.now.to_i - 1
       info.write!
@@ -192,28 +193,6 @@ describe MiniScheduler::Manager do
       expect(info.next_run).to be <= Time.now.to_i
 
       manager.stop!
-    end
-
-    # we have no database here
-    pending 'should log when job finishes running' do
-
-      Testing::RandomJob.runs = 0
-
-      info = manager.schedule_info(Testing::RandomJob)
-      info.next_run = Time.now.to_i - 1
-      info.write!
-
-      # with stats so we must be careful to cleanup
-      manager = MiniScheduler::Manager.new
-      manager.blocking_tick
-      manager.stop!
-
-      # TODO: we have no database
-      stat = MiniScheduler::Stat.first
-      expect(stat).to be_present
-      expect(stat.duration_ms).to be > 0
-      expect(stat.success).to be true
-      MiniScheduler::Stat.destroy_all
     end
 
     it 'should only run pending job once' do
@@ -250,7 +229,6 @@ describe MiniScheduler::Manager do
 
   describe '#next_run' do
     it 'should be within the next 5 mins if it never ran' do
-
       manager.remove(Testing::RandomJob)
       manager.ensure_schedule!(Testing::RandomJob)
 
