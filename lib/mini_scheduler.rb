@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "mini_scheduler/engine"
 require 'mini_scheduler/schedule'
 require 'mini_scheduler/schedule_info'

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 MiniScheduler.configure do |config|
   # An instance of Redis. See https://github.com/redis/redis-rb
 

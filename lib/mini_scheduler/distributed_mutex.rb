@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module MiniScheduler
   class DistributedMutex
     class Timeout < StandardError; end
@@ -30,13 +32,11 @@ module MiniScheduler
       attempts = 0
       sleep_duration = BASE_SLEEP_DURATION
       while !try_to_get_lock
-        sleep sleep_duration
 
-        # Exponential backoff
-        if sleep_duration >= MAX_SLEEP_DURATION
-          sleep_duration = MAX_SLEEP_DURATION
-        else
-          sleep_duration = sleep_duration * 2
+        sleep(sleep_duration)
+
+        if sleep_duration < MAX_SLEEP_DURATION
+          sleep_duration = [sleep_duration * 2, MAX_SLEEP_DURATION].min
         end
 
         attempts += 1

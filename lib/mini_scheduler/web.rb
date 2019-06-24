@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Based off sidetiq https://github.com/tobiassvn/sidetiq/blob/master/lib/sidetiq/web.rb
 module MiniScheduler
   module Web

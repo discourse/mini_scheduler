@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module MiniScheduler::Schedule
 
   def queue(value = nil)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module MiniScheduler
   class ScheduleInfo
     attr_accessor :next_run,

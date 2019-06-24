@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module MiniScheduler
   class Manager
     attr_accessor :random_ratio, :redis, :enable_stats, :queue
