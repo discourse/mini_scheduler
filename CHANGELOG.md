@@ -1,3 +1,7 @@
+# 0.12.0 - 29-08-2019
+
+- Add support for multiple workers which allows avoiding queue starvation
+
 # 0.11.0 - 24-06-2019
 
 - Correct situation where distributed mutex could end in a tight loop when

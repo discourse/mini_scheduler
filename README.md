@@ -30,6 +30,20 @@ In a Rails application, create files needed in your application to configure min
 
 An initializer is created named `config/initializers/mini_scheduler.rb` which lists all the configuration options.
 
+## Configuring MiniScheduler
+
+By default each instance of MiniScheduler will run with a single worker. To amend this behavior:
+
+```
+if Sidekiq.server? && defined?(Rails)
+  Rails.application.config.after_initialize do
+    MiniScheduler.start(workers: 5)
+  end
+end
+```
+
+This is useful for cases where you have extremely long running tasks that you would prefer did not starve.
+
 ## Usage
 
 Create jobs with a recurring schedule like this:

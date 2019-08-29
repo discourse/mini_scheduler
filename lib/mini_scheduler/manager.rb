@@ -2,7 +2,7 @@
 
 module MiniScheduler
   class Manager
-    attr_accessor :random_ratio, :redis, :enable_stats, :queue
+    attr_accessor :random_ratio, :redis, :enable_stats, :queue, :workers
 
     class Runner
       def initialize(manager)
@@ -29,9 +29,12 @@ module MiniScheduler
             sleep (@manager.keep_alive_duration / 2)
           end
         end
-        @thread = Thread.new do
-          while !@stopped
-            process_queue
+        @threads = []
+        manager.workers.times do
+          @threads << Thread.new do
+            while !@stopped
+              process_queue
+            end
           end
         end
       end
@@ -128,10 +131,10 @@ module MiniScheduler
 
           kill_thread = Thread.new do
             sleep 0.5
-            @thread.kill
+            @threads.each(&:kill)
           end
 
-          @thread.join
+          @threads.each(&:join)
           kill_thread.kill
           kill_thread.join
         end
@@ -171,6 +174,7 @@ module MiniScheduler
 
     def initialize(options = nil)
       @queue = options && options[:queue] || "default"
+      @workers = options && options[:workers] || 1
       @redis = MiniScheduler.redis
       @random_ratio = 0.1
       unless options && options[:skip_runner]

@@ -52,11 +52,11 @@ module MiniScheduler
     @skip_schedule
   end
 
-  def self.start
+  def self.start(workers: 1)
     schedules = Manager.discover_schedules
 
     Manager.discover_queues.each do |queue|
-      manager = Manager.new(queue: queue)
+      manager = Manager.new(queue: queue, workers: workers)
 
       schedules.each do |schedule|
         if schedule.queue == queue
