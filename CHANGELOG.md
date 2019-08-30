@@ -1,3 +1,7 @@
+# 0.12.1 - 30-08-2019
+
+- Jobs that change family from per host to non per host can cause a tight loop
+
 # 0.12.0 - 29-08-2019
 
 - Add support for multiple workers which allows avoiding queue starvation

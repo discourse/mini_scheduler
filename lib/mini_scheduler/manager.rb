@@ -265,11 +265,14 @@ module MiniScheduler
 
       if due.to_i <= Time.now.to_i
         klass = get_klass(key)
-        unless klass
+        if !klass || (
+          (klass.is_per_host && !hostname) || (hostname && !klass.is_per_host)
+        )
           # corrupt key, nuke it (renamed job or something)
           redis.zrem Manager.queue_key(queue, hostname), key
           return
         end
+
         info = schedule_info(klass)
         info.prev_run = Time.now.to_i
         info.prev_result = "QUEUED"
