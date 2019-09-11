@@ -1,3 +1,7 @@
+# 0.12.2 - 11-09-2019
+
+- Allow sorting schedule history by schedule name
+
 # 0.12.1 - 30-08-2019
 
 - Jobs that change family from per host to non per host can cause a tight loop
