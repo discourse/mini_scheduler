@@ -2,7 +2,20 @@
   <div class="col-sm-12">
     <h3>Scheduler History</h3>
   </div>
+
+  <div class="col-sm-12">
+    <form>
+      <select name="filter">
+        <option value="All" <%= "selected" if !@filter %>>All</option>
+        <% @schedules.each do |schedule| %>
+          <option value="<%=schedule%>" <%= "selected" if @filter == schedule.to_s%>><%=schedule%></option>
+        <% end %>
+      </select>
+      <input type="submit" value="Filter">
+    </form>
+  </div>
 </header>
+<br>
 
 <div class="container">
   <div class="row">
