@@ -12,11 +12,12 @@ module MiniScheduler
         @manager = manager
         @hostname = manager.hostname
 
-        @reschedule_orphans_thread = Thread.new do
+        @recovery_thread = Thread.new do
           while !@stopped
             sleep 60
 
             @mutex.synchronize do
+              repair_queue
               reschedule_orphans
             end
           end
@@ -43,6 +44,12 @@ module MiniScheduler
         @manager.keep_alive
       rescue => ex
         MiniScheduler.handle_job_exception(ex, message: "Scheduling manager keep-alive")
+      end
+
+      def repair_queue
+        @manager.repair_queue
+      rescue => ex
+        MiniScheduler.handle_job_exception(ex, message: "Scheduling manager queue repair")
       end
 
       def reschedule_orphans
@@ -122,10 +129,10 @@ module MiniScheduler
           @stopped = true
 
           @keep_alive_thread.kill
-          @reschedule_orphans_thread.kill
+          @recovery_thread.kill
 
           @keep_alive_thread.join
-          @reschedule_orphans_thread.join
+          @recovery_thread.join
 
           enq(nil)
 
@@ -250,6 +257,15 @@ module MiniScheduler
       name.constantize
     rescue NameError
       nil
+    end
+
+    def repair_queue
+      return if redis.exists?(self.class.queue_key(queue)) ||
+        redis.exists?(self.class.queue_key(queue, hostname))
+
+      self.class.discover_schedules
+        .select { |schedule| schedule.queue == queue }
+        .each { |schedule| ensure_schedule!(schedule) }
     end
 
     def tick
