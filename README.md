@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/discourse/mini_scheduler.svg?branch=master)](https://travis-ci.org/discourse/mini_scheduler)
+[![Build Status](https://github.com/discourse/mini_scheduler/workflows/CI/badge.svg)](https://github.com/discourse/mini_scheduler/actions)
 [![Gem Version](https://badge.fury.io/rb/mini_scheduler.svg)](https://rubygems.org/gems/mini_scheduler)
 
 # mini_scheduler
