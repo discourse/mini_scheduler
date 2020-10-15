@@ -195,6 +195,35 @@ describe MiniScheduler::Manager do
       manager.stop!
     end
 
+    def queued_jobs(manager, with_hostname:)
+      hostname = with_hostname ? manager.hostname : nil
+      key = MiniScheduler::Manager.queue_key(manager.queue, hostname)
+      redis.zrange(key, 0, -1).map(&:constantize)
+    end
+
+    it 'should recover from Redis flush' do
+      manager = MiniScheduler::Manager.new(enable_stats: false)
+      manager.ensure_schedule!(Testing::SuperLongJob)
+      manager.ensure_schedule!(Testing::PerHostJob)
+
+      expect(queued_jobs(manager, with_hostname: false)).to include(Testing::SuperLongJob)
+      expect(queued_jobs(manager, with_hostname: true)).to include(Testing::PerHostJob)
+
+      redis.scan_each(match: "_scheduler_*") do |key|
+        redis.del(key)
+      end
+
+      expect(queued_jobs(manager, with_hostname: false)).to be_empty
+      expect(queued_jobs(manager, with_hostname: true)).to be_empty
+
+      manager.repair_queue
+
+      expect(queued_jobs(manager, with_hostname: false)).to include(Testing::SuperLongJob)
+      expect(queued_jobs(manager, with_hostname: true)).to include(Testing::PerHostJob)
+
+      manager.stop!
+    end
+
     it 'should only run pending job once' do
 
       Testing::RandomJob.runs = 0
