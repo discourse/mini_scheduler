@@ -51,6 +51,16 @@ describe MiniScheduler::Manager do
         self.class.runs += 1
       end
     end
+
+    class FailingJob
+      extend ::MiniScheduler::Schedule
+
+      every 5.minutes
+
+      def perform
+        1 / 0
+      end
+    end
   end
 
   let(:manager) {
@@ -79,6 +89,7 @@ describe MiniScheduler::Manager do
     manager.remove(Testing::RandomJob)
     manager.remove(Testing::SuperLongJob)
     manager.remove(Testing::PerHostJob)
+    manager.remove(Testing::FailingJob)
 
     # connections that are not in use must be removed
     # otherwise active record gets super confused
@@ -263,6 +274,54 @@ describe MiniScheduler::Manager do
 
       expect(manager.next_run(Testing::RandomJob).to_i)
         .to be_within(5.minutes.to_i).of(Time.now.to_i + 5.minutes)
+    end
+  end
+
+  describe '#handle_job_exception' do
+    before do
+      info = manager.schedule_info(Testing::FailingJob)
+      info.next_run = Time.now.to_i - 1
+      info.write!
+    end
+
+    def expect_job_failure(ex, ctx)
+      expect(ex).to be_kind_of ZeroDivisionError
+      expect(ctx).to match({
+        message: "Running a scheduled job",
+        job: { "class" => Testing::FailingJob },
+      })
+    end
+
+    context 'with default handler' do
+      before do
+        MiniScheduler::SidekiqExceptionHandler.stubs(:handle_exception).with { |ex, ctx|
+          expect_job_failure(ex, ctx)
+        }
+      end
+
+      after do
+        MiniScheduler::SidekiqExceptionHandler.unstub(:handle_exception)
+      end
+
+      it 'captures failed jobs' do
+        manager.blocking_tick
+      end
+    end
+
+    context 'with custom handler' do
+      before do
+        MiniScheduler.job_exception_handler { |ex, ctx|
+          expect_job_failure(ex, ctx)
+        }
+      end
+
+      after do
+        MiniScheduler.instance_variable_set :@job_exception_handler, nil
+      end
+
+      it 'captures failed jobs' do
+        manager.blocking_tick
+      end
     end
   end
 end
