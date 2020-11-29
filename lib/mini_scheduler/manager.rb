@@ -92,7 +92,7 @@ module MiniScheduler
 
           klass.new.perform
         rescue => e
-          MiniScheduler.handle_job_exception(e, message: "Running a scheduled job", job: klass)
+          MiniScheduler.handle_job_exception(e, message: "Running a scheduled job", job: { "class" => klass })
 
           error = "#{e.class}: #{e.message} #{e.backtrace.join("\n")}"
           failed = true
