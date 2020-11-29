@@ -1,3 +1,8 @@
+# 0.13.0 - 2020-11-30
+
+- Fix exception code so it has parity with Sidekiq 4.2.3 and up, version bump cause
+minimum version of Sikekiq changed.
+
 # 0.12.3 - 2020-10-15
 
 - Fixes a problem where scheduler didn't recover from Redis flush
