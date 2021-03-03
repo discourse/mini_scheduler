@@ -15,6 +15,8 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/discourse/mini_scheduler"
   spec.license       = "MIT"
 
+  spec.required_ruby_version = ">= 2.5.0"
+
   spec.files = `git ls-files`.split($/).reject { |s| s =~ /^(spec|\.)/ }
   spec.require_paths = ["lib"]
 
