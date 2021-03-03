@@ -344,9 +344,9 @@ module MiniScheduler
       schedules
     end
 
-    @mutex = Mutex.new
+    @class_mutex = Mutex.new
     def self.seq
-      @mutex.synchronize do
+      @class_mutex.synchronize do
         @i ||= 0
         @i += 1
       end
