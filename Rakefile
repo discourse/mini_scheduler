@@ -14,6 +14,7 @@ rescue Bundler::BundlerError => error
 end
 
 RSpec::Core::RakeTask.new(:spec)
+task test: :spec
 
 desc "Default: run tests"
 task default: [ :spec ]
