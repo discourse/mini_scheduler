@@ -1,11 +1,1 @@
-/.bundle/
-/.yardoc
-/_yardoc/
-/coverage/
-/doc/
-/pkg/
-/spec/reports/
-/tmp/
 Gemfile.lock
-.DS_Store
-*.swp
