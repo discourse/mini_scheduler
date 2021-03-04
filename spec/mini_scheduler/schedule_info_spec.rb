@@ -4,7 +4,7 @@
 describe MiniScheduler::ScheduleInfo do
 
   let(:manager) { MiniScheduler::Manager.new }
-  let(:redis) { MockRedis.new }
+  let(:redis) { Redis.new }
 
   before do
     MiniScheduler.configure do |config|

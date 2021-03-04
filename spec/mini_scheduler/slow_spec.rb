@@ -41,7 +41,7 @@ if ENV["SLOW"]
 
   describe MiniScheduler::Manager do
 
-    let(:redis) { MockRedis.new }
+    let(:redis) { Redis.new }
 
     it "can correctly operate with multiple workers" do
       MiniScheduler.configure do |config|
