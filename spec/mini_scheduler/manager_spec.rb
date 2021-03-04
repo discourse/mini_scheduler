@@ -67,7 +67,7 @@ describe MiniScheduler::Manager do
     MiniScheduler::Manager.new(enable_stats: false)
   }
 
-  let(:redis) { MockRedis.new }
+  let(:redis) { Redis.new }
 
   before do
 
@@ -128,6 +128,8 @@ describe MiniScheduler::Manager do
     wait_for(on_fail: on_thread_mismatch) do
       @thread_count == Thread.list.count
     end
+
+    redis.flushdb
   end
 
   it 'can disable stats' do

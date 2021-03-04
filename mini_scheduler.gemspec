@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "mocha"
   spec.add_development_dependency "guard"
   spec.add_development_dependency "guard-rspec"
-  spec.add_development_dependency "mock_redis"
+  spec.add_development_dependency "redis"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rubocop-discourse", "~> 2.4.1"
 end

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'mock_redis'
 require 'mini_scheduler'
 require 'active_support/core_ext/numeric/time'
 require 'active_support/core_ext/integer/time'
