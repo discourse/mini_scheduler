@@ -20,15 +20,15 @@ Gem::Specification.new do |spec|
   spec.files = `git ls-files`.split($/).reject { |s| s =~ /^(spec|\.)/ }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "sidekiq", ">= 4.2.3"
+  spec.add_runtime_dependency "sidekiq", ">= 4.2.3", "< 7.0"
 
-  spec.add_development_dependency "pg", ">= 1.0"
-  spec.add_development_dependency "activesupport", ">= 5.2"
-  spec.add_development_dependency "rspec"
-  spec.add_development_dependency "mocha"
-  spec.add_development_dependency "guard"
-  spec.add_development_dependency "guard-rspec"
-  spec.add_development_dependency "redis"
-  spec.add_development_dependency "rake"
-  spec.add_development_dependency "rubocop-discourse", "~> 2.4.1"
+  spec.add_development_dependency "pg", "~> 1.0"
+  spec.add_development_dependency "activesupport", "~> 6.0"
+  spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "mocha", "~> 1.0"
+  spec.add_development_dependency "guard", "~> 2.0"
+  spec.add_development_dependency "guard-rspec", "~> 4.0"
+  spec.add_development_dependency "redis", "~> 4.0"
+  spec.add_development_dependency "rake", "~> 13.0"
+  spec.add_development_dependency "rubocop-discourse", "= 2.4.1"
 end
