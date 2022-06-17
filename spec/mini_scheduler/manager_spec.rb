@@ -294,13 +294,13 @@ describe MiniScheduler::Manager do
 
     context 'with default handler' do
       before do
-        MiniScheduler::SidekiqExceptionHandler.stubs(:handle_exception).with { |ex, ctx|
+        Sidekiq.stubs(:handle_exception).with { |ex, ctx|
           expect_job_failure(ex, ctx)
         }
       end
 
       after do
-        MiniScheduler::SidekiqExceptionHandler.unstub(:handle_exception)
+        Sidekiq.unstub(:handle_exception)
       end
 
       it 'captures failed jobs' do

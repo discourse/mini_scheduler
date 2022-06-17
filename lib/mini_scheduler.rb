@@ -4,16 +4,12 @@ require 'mini_scheduler/schedule'
 require 'mini_scheduler/schedule_info'
 require 'mini_scheduler/manager'
 require 'mini_scheduler/distributed_mutex'
-require 'sidekiq/exception_handler'
+require 'sidekiq'
 
 module MiniScheduler
 
   def self.configure
     yield self
-  end
-
-  class SidekiqExceptionHandler
-    extend Sidekiq::ExceptionHandler
   end
 
   def self.job_exception_handler(&blk)
@@ -25,7 +21,7 @@ module MiniScheduler
     if job_exception_handler
       job_exception_handler.call(ex, context)
     else
-      SidekiqExceptionHandler.handle_exception(ex, context)
+      Sidekiq.handle_exception(ex, context)
     end
   end
 

@@ -6,7 +6,7 @@ MiniScheduler.configure do |config|
   # config.redis = $redis
 
   # Define a custom exception handler when an exception is raised
-  # by a scheduled job. By default, SidekiqExceptionHandler is used.
+  # by a scheduled job. By default, Sidekiq.handle_exception is used.
 
   # config.job_exception_handler do |ex, context|
   #   ...
