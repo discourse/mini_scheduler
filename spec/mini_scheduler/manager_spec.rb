@@ -293,18 +293,29 @@ describe MiniScheduler::Manager do
     end
 
     context 'with default handler' do
+      class TempSidekiqLogger
+        attr_accessor :exception, :context
+
+        def call(ex, ctx)
+          self.exception = ex
+          self.context = ctx
+        end
+      end
+
+      let(:logger) { TempSidekiqLogger.new }
+
       before do
-        Sidekiq.stubs(:handle_exception).with { |ex, ctx|
-          expect_job_failure(ex, ctx)
-        }
+        Sidekiq.error_handlers << logger
       end
 
       after do
-        Sidekiq.unstub(:handle_exception)
+        Sidekiq.error_handlers.delete(logger)
       end
 
       it 'captures failed jobs' do
         manager.blocking_tick
+
+        expect_job_failure(logger.exception, logger.context)
       end
     end
 

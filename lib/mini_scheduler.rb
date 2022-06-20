@@ -6,10 +6,25 @@ require 'mini_scheduler/manager'
 require 'mini_scheduler/distributed_mutex'
 require 'sidekiq'
 
+begin
+  require 'sidekiq/exception_handler'
+rescue LoadError
+end
+
 module MiniScheduler
 
   def self.configure
     yield self
+  end
+
+  class SidekiqExceptionHandler
+    if defined?(Sidekiq::ExceptionHandler)
+      extend Sidekiq::ExceptionHandler
+    else
+      def self.handle_exception(exception, context)
+        Sidekiq.handle_exception(exception, context)
+      end
+    end
   end
 
   def self.job_exception_handler(&blk)
@@ -21,7 +36,7 @@ module MiniScheduler
     if job_exception_handler
       job_exception_handler.call(ex, context)
     else
-      Sidekiq.handle_exception(ex, context)
+      SidekiqExceptionHandler.handle_exception(ex, context)
     end
   end
 
