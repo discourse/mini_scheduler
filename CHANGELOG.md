@@ -1,3 +1,7 @@
+# UNRELEASED
+
+- Fix compatibility with Sidekiq 6.5 (#15)
+
 # 0.13.0 - 2020-11-30
 
 - Fix exception code so it has parity with Sidekiq 4.2.3 and up, version bump cause
