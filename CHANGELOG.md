@@ -1,4 +1,4 @@
-# UNRELEASED
+# 0.14.0 - 2022-06-20
 
 - Fix compatibility with Sidekiq 6.5 (#15)
 
