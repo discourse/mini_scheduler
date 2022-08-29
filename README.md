@@ -69,6 +69,15 @@ Options for schedules:
 
 To view the scheduled jobs, their history, and the schedule, go to sidekiq's web UI and look for the "Scheduler" tab at the top.
 
+To enable this view in Sidekiq, add `require "mini_scheduler/web"` to `routes.rb`:
+ 
+ ```ruby
+require "sidekiq/web"
+require "mini_scheduler/web"
+Rails.application.routes.draw do
+  ...
+  
+```
 ## How to reach us
 
 If you have questions about using mini_scheduler or found a problem, you can find us at https://meta.discourse.org.
