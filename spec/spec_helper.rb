@@ -5,10 +5,10 @@ require 'active_support/core_ext/numeric/time'
 require 'active_support/core_ext/integer/time'
 require 'mocha/api'
 
-def wait_for(on_fail: nil, &blk)
+def wait_for(on_fail: nil, timeout: 1, &blk)
   i = 0
   result = false
-  while !result && i < 1000
+  while !result && i < timeout * 1000
     result = blk.call
     i += 1
     sleep 0.001

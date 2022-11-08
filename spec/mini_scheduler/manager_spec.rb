@@ -208,6 +208,58 @@ describe MiniScheduler::Manager do
       manager.stop!
     end
 
+    it 'should recover from redis readonly within same manager instance' do
+      info = manager.schedule_info(Testing::SuperLongJob)
+      info.next_run = Time.now.to_i - 1
+      info.write!
+
+      manager.tick
+
+      wait_for do
+        manager.schedule_info(Testing::SuperLongJob).prev_result == "RUNNING"
+      end
+
+      # Simualate redis failure while job is running
+      MiniScheduler::ScheduleInfo.any_instance.stubs(:write!).raises(Redis::CommandError)
+
+      runner = manager.instance_variable_get(:@runner)
+      worker_threads = runner.instance_variable_get(:@threads)
+      worker_thread_ids = runner.worker_thread_ids
+
+      # Now that Redis is broken, simulate the 'SuperLongJob' ending
+      worker_threads.each(&:wakeup)
+
+      # Wait until the worker dies due to the redis failure
+      wait_for(timeout: 5) { worker_threads.reject(&:alive?).count == 1 }
+
+      # Observe the broken status
+      expect(manager.schedule_info(Testing::SuperLongJob).prev_result).to eq("RUNNING")
+
+      # Redis back online
+      MiniScheduler::ScheduleInfo.any_instance.unstub(:write!)
+
+      # Reschedule should not do anything straight away
+      manager.reschedule_orphans!
+      expect(manager.schedule_info(Testing::SuperLongJob).prev_result).to eq("RUNNING")
+
+      # Simultate time passing and redis keys expiring
+      worker_thread_ids.each do |id|
+        expect(manager.redis.ttl(id)).to be > 30
+        manager.redis.del(id)
+      end
+
+      manager.reschedule_orphans!
+
+      info = manager.schedule_info(Testing::SuperLongJob)
+      expect(info.prev_result).to eq("ORPHAN")
+      expect(info.next_run).to be <= Time.now.to_i
+
+      runner.instance_variable_get(:@recovery_thread).wakeup
+      manager.tick
+
+      wait_for { manager.schedule_info(Testing::SuperLongJob).prev_result == "RUNNING" }
+    end
+
     def queued_jobs(manager, with_hostname:)
       hostname = with_hostname ? manager.hostname : nil
       key = MiniScheduler::Manager.queue_key(manager.queue, hostname)

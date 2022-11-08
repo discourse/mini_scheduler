@@ -19,6 +19,7 @@ module MiniScheduler
             @mutex.synchronize do
               repair_queue
               reschedule_orphans
+              ensure_worker_threads
             end
           end
         end
@@ -30,18 +31,11 @@ module MiniScheduler
             sleep (@manager.keep_alive_duration / 2)
           end
         end
-        @threads = []
-        manager.workers.times do
-          @threads << Thread.new do
-            while !@stopped
-              process_queue
-            end
-          end
-        end
+        ensure_worker_threads
       end
 
-      def keep_alive
-        @manager.keep_alive
+      def keep_alive(*ids)
+        @manager.keep_alive(*ids)
       rescue => ex
         MiniScheduler.handle_job_exception(ex, message: "Scheduling manager keep-alive")
       end
@@ -58,12 +52,46 @@ module MiniScheduler
         MiniScheduler.handle_job_exception(ex, message: "Scheduling manager orphan rescheduler")
       end
 
+      def ensure_worker_threads
+        @threads ||= []
+        @threads.delete_if { |t| !t.alive? }
+        (@manager.workers - @threads.size).times do
+          @threads << Thread.new { worker_loop }
+        end
+      rescue => ex
+        MiniScheduler.handle_job_exception(ex, message: "Scheduling manager worker thread starter")
+      end
+
+      def worker_loop
+        set_current_worker_thread_id!
+        keep_alive(current_worker_thread_id)
+        while !@stopped
+          begin
+            process_queue
+          rescue => ex
+            MiniScheduler.handle_job_exception(ex, message: "Processing scheduled job queue")
+            break # Data could be in a bad state - stop the thread
+          end
+        end
+      end
+
       def hostname
         @hostname
       end
 
-      def process_queue
+      def current_worker_thread_id
+        Thread.current[:mini_scheduler_worker_thread_id]
+      end
 
+      def set_current_worker_thread_id!
+        Thread.current[:mini_scheduler_worker_thread_id] = "#{@manager.identity_key}:thread_#{SecureRandom.alphanumeric(10)}"
+      end
+
+      def worker_thread_ids
+        @threads.filter(&:alive?).filter_map { |t| t[:mini_scheduler_worker_thread_id] }
+      end
+
+      def process_queue
         klass = @queue.deq
         # hack alert, I need to both deq and set @running atomically.
         @running = true
@@ -78,6 +106,7 @@ module MiniScheduler
 
         begin
           info.prev_result = "RUNNING"
+          info.current_owner = current_worker_thread_id
           @mutex.synchronize { info.write! }
 
           if @manager.enable_stats
@@ -113,8 +142,6 @@ module MiniScheduler
         attempts(3) do
           @mutex.synchronize { info.write! }
         end
-      rescue => ex
-        MiniScheduler.handle_job_exception(ex, message: "Processing scheduled job queue")
       ensure
         @running = false
         if defined?(ActiveRecord::Base)
@@ -163,14 +190,16 @@ module MiniScheduler
         end
       end
 
-      def attempts(n)
-        n.times {
-          begin
-            yield; break
-          rescue
-            sleep Random.rand
-          end
-        }
+      def attempts(max_attempts)
+        attempt = 0
+        begin
+          yield
+        rescue
+          attempt += 1
+          raise if attempt >= max_attempts
+          sleep Random.rand
+          retry
+        end
       end
 
     end
@@ -314,8 +343,11 @@ module MiniScheduler
       60
     end
 
-    def keep_alive
-      redis.setex identity_key, keep_alive_duration, ""
+    def keep_alive(*ids)
+      ids = [identity_key, *@runner.worker_thread_ids] if ids.size == 0
+      ids.each do |identity_key|
+        redis.setex identity_key, keep_alive_duration, ""
+      end
     end
 
     def lock
@@ -352,8 +384,11 @@ module MiniScheduler
       end
     end
 
+    @@identity_key_mutex = Mutex.new
     def identity_key
-      @identity_key ||= "_scheduler_#{hostname}:#{Process.pid}:#{self.class.seq}:#{SecureRandom.hex}"
+      @@identity_key_mutex.synchronize do
+        @identity_key ||= "_scheduler_#{hostname}:#{Process.pid}:#{self.class.seq}:#{SecureRandom.hex}"
+      end
     end
 
     def self.lock_key(queue)
