@@ -386,6 +386,7 @@ module MiniScheduler
 
     @@identity_key_mutex = Mutex.new
     def identity_key
+      return @identity_key if @identity_key
       @@identity_key_mutex.synchronize do
         @identity_key ||= "_scheduler_#{hostname}:#{Process.pid}:#{self.class.seq}:#{SecureRandom.hex}"
       end

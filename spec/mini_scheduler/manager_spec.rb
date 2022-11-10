@@ -232,7 +232,7 @@ describe MiniScheduler::Manager do
       # Wait until the worker dies due to the redis failure
       wait_for(timeout: 5) { worker_threads.reject(&:alive?).count == 1 }
 
-      # Observe the broken status
+      # Observe that the status in Redis is stuck on "running"
       expect(manager.schedule_info(Testing::SuperLongJob).prev_result).to eq("RUNNING")
 
       # Redis back online
