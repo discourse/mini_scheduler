@@ -219,7 +219,7 @@ describe MiniScheduler::Manager do
         manager.schedule_info(Testing::SuperLongJob).prev_result == "RUNNING"
       end
 
-      # Simualate redis failure while job is running
+      # Simulate redis failure while job is running
       MiniScheduler::ScheduleInfo.any_instance.stubs(:write!).raises(Redis::CommandError)
 
       runner = manager.instance_variable_get(:@runner)
@@ -242,7 +242,7 @@ describe MiniScheduler::Manager do
       manager.reschedule_orphans!
       expect(manager.schedule_info(Testing::SuperLongJob).prev_result).to eq("RUNNING")
 
-      # Simultate time passing and redis keys expiring
+      # Simulate time passing and redis keys expiring
       worker_thread_ids.each do |id|
         expect(manager.redis.ttl(id)).to be > 30
         manager.redis.del(id)
