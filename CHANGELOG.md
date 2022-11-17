@@ -1,4 +1,4 @@
-# 0.15.0 - 2022-11-08
+# 0.15.0 - 2022-11-17
 
 - Fix data inconsistencies when Redis fails during jobs (#19)
 - Update minimum Ruby version to 2.7
