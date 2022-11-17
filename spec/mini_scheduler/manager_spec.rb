@@ -341,7 +341,7 @@ describe MiniScheduler::Manager do
     def expect_job_failure(ex, ctx)
       expect(ex).to be_kind_of ZeroDivisionError
       expect(ctx).to match({
-        message: "Running a scheduled job",
+        message: "Error while running a scheduled job",
         job: { "class" => Testing::FailingJob },
       })
     end
