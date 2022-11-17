@@ -37,19 +37,19 @@ module MiniScheduler
       def keep_alive(*ids)
         @manager.keep_alive(*ids)
       rescue => ex
-        MiniScheduler.handle_job_exception(ex, message: "Scheduling manager keep-alive")
+        MiniScheduler.handle_job_exception(ex, message: "Error during MiniScheduler keep)alive")
       end
 
       def repair_queue
         @manager.repair_queue
       rescue => ex
-        MiniScheduler.handle_job_exception(ex, message: "Scheduling manager queue repair")
+        MiniScheduler.handle_job_exception(ex, message: "Error during MiniScheduler repair_queue")
       end
 
       def reschedule_orphans
         @manager.reschedule_orphans!
       rescue => ex
-        MiniScheduler.handle_job_exception(ex, message: "Scheduling manager orphan rescheduler")
+        MiniScheduler.handle_job_exception(ex, message: "Error during MiniScheduler reschedule_orphans")
       end
 
       def ensure_worker_threads
@@ -59,7 +59,7 @@ module MiniScheduler
           @threads << Thread.new { worker_loop }
         end
       rescue => ex
-        MiniScheduler.handle_job_exception(ex, message: "Scheduling manager worker thread starter")
+        MiniScheduler.handle_job_exception(ex, message: "Error during MiniScheduler ensure_worker_threads")
       end
 
       def worker_loop
@@ -69,7 +69,7 @@ module MiniScheduler
           begin
             process_queue
           rescue => ex
-            MiniScheduler.handle_job_exception(ex, message: "Processing scheduled job queue")
+            MiniScheduler.handle_job_exception(ex, message: "Error during MiniScheduler worker_loop")
             break # Data could be in a bad state - stop the thread
           end
         end
@@ -121,7 +121,7 @@ module MiniScheduler
 
           klass.new.perform
         rescue => e
-          MiniScheduler.handle_job_exception(e, message: "Running a scheduled job", job: { "class" => klass })
+          MiniScheduler.handle_job_exception(e, message: "Error while running a scheduled job", job: { "class" => klass })
 
           error = "#{e.class}: #{e.message} #{e.backtrace.join("\n")}"
           failed = true
