@@ -1,3 +1,8 @@
+# 0.15.0 - 2022-11-17
+
+- Fix data inconsistencies when Redis fails during jobs (#19)
+- Update minimum Ruby version to 2.7
+
 # 0.14.0 - 2022-06-20
 
 - Fix compatibility with Sidekiq 6.5 (#15)

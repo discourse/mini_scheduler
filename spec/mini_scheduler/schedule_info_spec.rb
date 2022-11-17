@@ -16,7 +16,7 @@ describe MiniScheduler::ScheduleInfo do
     manager.stop!
   end
 
-  context "every" do
+  describe "every" do
     class RandomJob
       extend ::MiniScheduler::Schedule
 
@@ -64,7 +64,7 @@ describe MiniScheduler::ScheduleInfo do
     end
   end
 
-  context "daily" do
+  describe "daily" do
 
     class DailyJob
       extend ::MiniScheduler::Schedule
