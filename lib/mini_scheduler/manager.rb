@@ -37,7 +37,7 @@ module MiniScheduler
       def keep_alive(*ids)
         @manager.keep_alive(*ids)
       rescue => ex
-        MiniScheduler.handle_job_exception(ex, message: "Error during MiniScheduler keep)alive")
+        MiniScheduler.handle_job_exception(ex, message: "Error during MiniScheduler keep_alive")
       end
 
       def repair_queue
