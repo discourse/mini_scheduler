@@ -189,23 +189,32 @@ describe MiniScheduler::Manager do
       expect(redis.zcard(MiniScheduler::Manager.queue_key("default"))).to eq(0)
     end
 
-    it 'should recover from crashed manager' do
-      info = manager.schedule_info(Testing::SuperLongJob)
-      info.next_run = Time.now.to_i - 1
-      info.write!
+    context 'when manager is stopped' do
+      let(:manager) do
+        # no workers to ensure the original job doesn't start
+        MiniScheduler::Manager.new(enable_stats: false, workers: 0)
+      end
 
-      manager.tick
-      manager.stop!
+      it 'can later reschedule jobs' do
+        info = manager.schedule_info(Testing::SuperLongJob)
+        original_time = Time.now.to_i - 1
+        info.next_run = original_time
+        info.write!
 
-      redis.del manager.identity_key
+        manager.tick
+        manager.stop!
 
-      manager = MiniScheduler::Manager.new(enable_stats: false)
-      manager.reschedule_orphans!
+        redis.del manager.identity_key
 
-      info = manager.schedule_info(Testing::SuperLongJob)
-      expect(info.next_run).to be <= Time.now.to_i
+        manager = MiniScheduler::Manager.new(enable_stats: false, workers: 0)
+        manager.reschedule_orphans!
 
-      manager.stop!
+        info = manager.schedule_info(Testing::SuperLongJob)
+        expect(info.next_run).to be <= Time.now.to_i
+        expect(info.next_run).to_not eq(original_time)
+
+        manager.stop!
+      end
     end
 
     it 'should recover from redis readonly within same manager instance' do
