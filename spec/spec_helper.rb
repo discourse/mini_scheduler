@@ -37,20 +37,7 @@ def freeze_time(now = Time.now)
   Date.stubs(:today).returns(datetime.to_date)
   TrackTimeStub.stubs(:stubbed).returns(true)
 
-  if block_given?
-    begin
-      yield
-    ensure
-      unfreeze_time
-    end
-  end
-end
-
-def unfreeze_time
-  DateTime.unstub(:now)
-  Time.unstub(:now)
-  Date.unstub(:today)
-  TrackTimeStub.unstub(:stubbed)
+  yield if block_given?
 end
 
 RSpec.configure do |config|
