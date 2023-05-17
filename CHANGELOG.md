@@ -1,3 +1,7 @@
+# 0.16.0 - 2023-05-17
+
+- Support Redis gem version 5
+
 # 0.15.0 - 2022-11-17
 
 - Fix data inconsistencies when Redis fails during jobs (#19)
