@@ -104,7 +104,7 @@ module MiniScheduler
         current_owner: @current_owner
       }.to_json
 
-      redis.zadd queue_key, @next_run, @klass if @next_run
+      redis.zadd queue_key, @next_run.to_s, @klass.to_s if @next_run
     end
 
     def del!
@@ -135,7 +135,7 @@ module MiniScheduler
     private
     def clear!
       redis.del key
-      redis.zrem queue_key, @klass
+      redis.zrem queue_key, @klass.to_s
     end
 
   end
