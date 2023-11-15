@@ -274,7 +274,7 @@ module MiniScheduler
         info = schedule_info(klass)
 
         if ['QUEUED', 'RUNNING'].include?(info.prev_result) &&
-          (info.current_owner.blank? || !redis.get(info.current_owner))
+          (!info.current_owner || !redis.get(info.current_owner))
           info.prev_result = 'ORPHAN'
           info.next_run = Time.now.to_i
           info.write!
