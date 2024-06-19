@@ -28,7 +28,7 @@ module MiniScheduler
             @mutex.synchronize do
               keep_alive
             end
-            sleep (@manager.keep_alive_duration / 2)
+            sleep(@manager.keep_alive_duration / 2)
           end
         end
         ensure_worker_threads
