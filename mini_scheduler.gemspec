@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
   spec.files = `git ls-files`.split($/).reject { |s| s =~ /^(spec|\.)/ }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "sidekiq", ">= 4.2.3", "< 7.0"
+  spec.add_runtime_dependency "sidekiq", ">= 4.2.3", "< 8.0"
 
   spec.add_development_dependency "pg", "~> 1.0"
   spec.add_development_dependency "activesupport", "~> 7.0"
