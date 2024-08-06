@@ -32,6 +32,11 @@ jobs:
       - name: Lint
         run: bundle exec rubocop
 
+      - name: Syntax Tree
+        if: ${{ !cancelled() }}
+        run: |
+          bundle exec stree check Gemfile $(git ls-files '*.rb') $(git ls-files '*.rake') $(git ls-files '*.thor')
+
       - name: Tests
         run: bundle exec rake test
 

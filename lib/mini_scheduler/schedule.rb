@@ -1,16 +1,13 @@
 # frozen_string_literal: true
 
 module MiniScheduler::Schedule
-
   def queue(value = nil)
     @queue = value.to_s if value
     @queue ||= "default"
   end
 
   def daily(options = nil)
-    if options
-      @daily = options
-    end
+    @daily = options if options
     @daily
   end
 

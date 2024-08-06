@@ -2,7 +2,6 @@
 # encoding: utf-8
 
 describe MiniScheduler::Manager do
-
   module Testing
     class RandomJob
       extend ::MiniScheduler::Schedule
@@ -63,25 +62,18 @@ describe MiniScheduler::Manager do
     end
   end
 
-  let(:manager) {
-    MiniScheduler::Manager.new(enable_stats: false)
-  }
+  let(:manager) { MiniScheduler::Manager.new(enable_stats: false) }
 
   let(:redis) { Redis.new }
 
   before do
-
-    MiniScheduler.configure do |config|
-      config.redis = redis
-    end
+    MiniScheduler.configure { |config| config.redis = redis }
 
     # expect(ActiveRecord::Base.connection_pool.connections.length).to eq(1)
     @thread_count = Thread.list.count
 
     @backtraces = {}
-    Thread.list.each do |t|
-      @backtraces[t.object_id] = t.backtrace
-    end
+    Thread.list.each { |t| @backtraces[t.object_id] = t.backtrace }
   end
 
   after do
@@ -98,41 +90,40 @@ describe MiniScheduler::Manager do
     # end
     # expect(ActiveRecord::Base.connection_pool.connections.length).to (be <= 1)
 
-    on_thread_mismatch = lambda do
-      current = Thread.list.map { |t| t.object_id }
+    on_thread_mismatch =
+      lambda do
+        current = Thread.list.map { |t| t.object_id }
 
-      old_threads = @backtraces.keys
-      extra = current - old_threads
+        old_threads = @backtraces.keys
+        extra = current - old_threads
 
-      missing = old_threads - current
+        missing = old_threads - current
 
-      if missing.length > 0
-        STDERR.puts "\nMissing Threads #{missing.length} thread/s"
-        missing.each do |id|
-          STDERR.puts @backtraces[id]
-          STDERR.puts
-        end
-      end
-
-      if extra.length > 0
-        Thread.list.each do |thread|
-          if extra.include?(thread.object_id)
-            STDERR.puts "\nExtra Thread Backtrace:"
-            STDERR.puts thread.backtrace
+        if missing.length > 0
+          STDERR.puts "\nMissing Threads #{missing.length} thread/s"
+          missing.each do |id|
+            STDERR.puts @backtraces[id]
             STDERR.puts
           end
         end
-      end
-    end
 
-    wait_for(on_fail: on_thread_mismatch) do
-      @thread_count == Thread.list.count
-    end
+        if extra.length > 0
+          Thread.list.each do |thread|
+            if extra.include?(thread.object_id)
+              STDERR.puts "\nExtra Thread Backtrace:"
+              STDERR.puts thread.backtrace
+              STDERR.puts
+            end
+          end
+        end
+      end
+
+    wait_for(on_fail: on_thread_mismatch) { @thread_count == Thread.list.count }
 
     redis.flushdb
   end
 
-  it 'can disable stats' do
+  it "can disable stats" do
     manager = MiniScheduler::Manager.new(enable_stats: false)
     expect(manager.enable_stats).to eq(false)
 
@@ -141,61 +132,56 @@ describe MiniScheduler::Manager do
     manager = MiniScheduler::Manager.new
     expect(manager.enable_stats).to eq(false)
     manager.stop!
-
   end
 
-  describe 'per host jobs' do
+  describe "per host jobs" do
     it "correctly schedules on multiple hosts" do
       freeze_time
 
       Testing::PerHostJob.runs = 0
 
-      hosts = ['a', 'b', 'c']
+      hosts = %w[a b c]
 
-      hosts.map do |host|
+      hosts
+        .map do |host|
+          manager = MiniScheduler::Manager.new(hostname: host, enable_stats: false)
+          manager.ensure_schedule!(Testing::PerHostJob)
 
-        manager = MiniScheduler::Manager.new(hostname: host, enable_stats: false)
-        manager.ensure_schedule!(Testing::PerHostJob)
+          info = manager.schedule_info(Testing::PerHostJob)
+          info.next_run = Time.now.to_i - 10
+          info.write!
 
-        info = manager.schedule_info(Testing::PerHostJob)
-        info.next_run = Time.now.to_i - 10
-        info.write!
-
-        manager
-
-      end.each do |manager|
-
-        manager.blocking_tick
-        manager.stop!
-
-      end
+          manager
+        end
+        .each do |manager|
+          manager.blocking_tick
+          manager.stop!
+        end
 
       expect(Testing::PerHostJob.runs).to eq(3)
     end
   end
 
-  describe '#sync' do
-
-    it 'increases' do
+  describe "#sync" do
+    it "increases" do
       expect(MiniScheduler::Manager.seq).to eq(MiniScheduler::Manager.seq - 1)
     end
   end
 
-  describe '#tick' do
-
-    it 'should nuke missing jobs' do
+  describe "#tick" do
+    it "should nuke missing jobs" do
       redis.zadd MiniScheduler::Manager.queue_key("default"), Time.now.to_i - 1000, "BLABLA"
       manager.tick
       expect(redis.zcard(MiniScheduler::Manager.queue_key("default"))).to eq(0)
     end
 
-    context 'when manager is stopped' do
+    context "when manager is stopped" do
       let(:manager) do
         # no workers to ensure the original job doesn't start
         MiniScheduler::Manager.new(enable_stats: false, workers: 0)
       end
 
-      it 'can later reschedule jobs' do
+      it "can later reschedule jobs" do
         info = manager.schedule_info(Testing::SuperLongJob)
         original_time = Time.now.to_i - 1
         info.next_run = original_time
@@ -217,16 +203,14 @@ describe MiniScheduler::Manager do
       end
     end
 
-    it 'should recover from redis readonly within same manager instance' do
+    it "should recover from redis readonly within same manager instance" do
       info = manager.schedule_info(Testing::SuperLongJob)
       info.next_run = Time.now.to_i - 1
       info.write!
 
       manager.tick
 
-      wait_for do
-        manager.schedule_info(Testing::SuperLongJob).prev_result == "RUNNING"
-      end
+      wait_for { manager.schedule_info(Testing::SuperLongJob).prev_result == "RUNNING" }
 
       # Simulate redis failure while job is running
       MiniScheduler::ScheduleInfo.any_instance.stubs(:write!).raises(Redis::CommandError)
@@ -275,7 +259,7 @@ describe MiniScheduler::Manager do
       redis.zrange(key, 0, -1).map(&:constantize)
     end
 
-    it 'should recover from Redis flush' do
+    it "should recover from Redis flush" do
       manager = MiniScheduler::Manager.new(enable_stats: false)
       manager.ensure_schedule!(Testing::SuperLongJob)
       manager.ensure_schedule!(Testing::PerHostJob)
@@ -283,9 +267,7 @@ describe MiniScheduler::Manager do
       expect(queued_jobs(manager, with_hostname: false)).to include(Testing::SuperLongJob)
       expect(queued_jobs(manager, with_hostname: true)).to include(Testing::PerHostJob)
 
-      redis.scan_each(match: "_scheduler_*") do |key|
-        redis.del(key)
-      end
+      redis.scan_each(match: "_scheduler_*") { |key| redis.del(key) }
 
       expect(queued_jobs(manager, with_hostname: false)).to be_empty
       expect(queued_jobs(manager, with_hostname: true)).to be_empty
@@ -298,21 +280,22 @@ describe MiniScheduler::Manager do
       manager.stop!
     end
 
-    it 'should only run pending job once' do
-
+    it "should only run pending job once" do
       Testing::RandomJob.runs = 0
 
       info = manager.schedule_info(Testing::RandomJob)
       info.next_run = Time.now.to_i - 1
       info.write!
 
-      (0..5).map do
-        Thread.new do
-          manager = MiniScheduler::Manager.new(enable_stats: false)
-          manager.blocking_tick
-          manager.stop!
+      (0..5)
+        .map do
+          Thread.new do
+            manager = MiniScheduler::Manager.new(enable_stats: false)
+            manager.blocking_tick
+            manager.stop!
+          end
         end
-      end.map(&:join)
+        .map(&:join)
 
       expect(Testing::RandomJob.runs).to eq(1)
 
@@ -321,26 +304,26 @@ describe MiniScheduler::Manager do
       expect(info.prev_duration).to be > 0
       expect(info.prev_result).to eq("OK")
     end
-
   end
 
-  describe '#discover_schedules' do
-    it 'Discovers Testing::RandomJob' do
+  describe "#discover_schedules" do
+    it "Discovers Testing::RandomJob" do
       expect(MiniScheduler::Manager.discover_schedules).to include(Testing::RandomJob)
     end
   end
 
-  describe '#next_run' do
-    it 'should be within the next 5 mins if it never ran' do
+  describe "#next_run" do
+    it "should be within the next 5 mins if it never ran" do
       manager.remove(Testing::RandomJob)
       manager.ensure_schedule!(Testing::RandomJob)
 
-      expect(manager.next_run(Testing::RandomJob).to_i)
-        .to be_within(5.minutes.to_i).of(Time.now.to_i + 5.minutes)
+      expect(manager.next_run(Testing::RandomJob).to_i).to be_within(5.minutes.to_i).of(
+        Time.now.to_i + 5.minutes,
+      )
     end
   end
 
-  describe '#handle_job_exception' do
+  describe "#handle_job_exception" do
     before do
       info = manager.schedule_info(Testing::FailingJob)
       info.next_run = Time.now.to_i - 1
@@ -349,13 +332,12 @@ describe MiniScheduler::Manager do
 
     def expect_job_failure(ex, ctx)
       expect(ex).to be_kind_of ZeroDivisionError
-      expect(ctx).to match({
-        message: "Error while running a scheduled job",
-        job: { "class" => Testing::FailingJob },
-      })
+      expect(ctx).to match(
+        { message: "Error while running a scheduled job", job: { "class" => Testing::FailingJob } },
+      )
     end
 
-    context 'with default handler' do
+    context "with default handler" do
       class TempSidekiqLogger
         attr_accessor :exception, :context
 
@@ -367,33 +349,23 @@ describe MiniScheduler::Manager do
 
       let(:logger) { TempSidekiqLogger.new }
 
-      before do
-        Sidekiq.error_handlers << logger
-      end
+      before { Sidekiq.error_handlers << logger }
 
-      after do
-        Sidekiq.error_handlers.delete(logger)
-      end
+      after { Sidekiq.error_handlers.delete(logger) }
 
-      it 'captures failed jobs' do
+      it "captures failed jobs" do
         manager.blocking_tick
 
         expect_job_failure(logger.exception, logger.context)
       end
     end
 
-    context 'with custom handler' do
-      before do
-        MiniScheduler.job_exception_handler { |ex, ctx|
-          expect_job_failure(ex, ctx)
-        }
-      end
+    context "with custom handler" do
+      before { MiniScheduler.job_exception_handler { |ex, ctx| expect_job_failure(ex, ctx) } }
 
-      after do
-        MiniScheduler.instance_variable_set :@job_exception_handler, nil
-      end
+      after { MiniScheduler.instance_variable_set :@job_exception_handler, nil }
 
-      it 'captures failed jobs' do
+      it "captures failed jobs" do
         manager.blocking_tick
       end
     end
