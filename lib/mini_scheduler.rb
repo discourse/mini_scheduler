@@ -1,18 +1,17 @@
 # frozen_string_literal: true
 require "mini_scheduler/engine"
-require 'mini_scheduler/schedule'
-require 'mini_scheduler/schedule_info'
-require 'mini_scheduler/manager'
-require 'mini_scheduler/distributed_mutex'
-require 'sidekiq'
+require "mini_scheduler/schedule"
+require "mini_scheduler/schedule_info"
+require "mini_scheduler/manager"
+require "mini_scheduler/distributed_mutex"
+require "sidekiq"
 
 begin
-  require 'sidekiq/exception_handler'
+  require "sidekiq/exception_handler"
 rescue LoadError
 end
 
 module MiniScheduler
-
   def self.configure
     yield self
   end
@@ -69,18 +68,12 @@ module MiniScheduler
     Manager.discover_queues.each do |queue|
       manager = Manager.new(queue: queue, workers: workers)
 
-      schedules.each do |schedule|
-        if schedule.queue == queue
-          manager.ensure_schedule!(schedule)
-        end
-      end
+      schedules.each { |schedule| manager.ensure_schedule!(schedule) if schedule.queue == queue }
 
       Thread.new do
         while true
           begin
-            if !self.skip_schedule || !self.skip_schedule.call
-              manager.tick
-            end
+            manager.tick if !self.skip_schedule || !self.skip_schedule.call
           rescue => e
             # the show must go on
             handle_job_exception(e, message: "While ticking scheduling manager")

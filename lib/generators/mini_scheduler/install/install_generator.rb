@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require 'rails/generators'
-require 'rails/generators/migration'
-require 'active_record'
+require "rails/generators"
+require "rails/generators/migration"
+require "active_record"
 
 module MiniScheduler
   module Generators
     class InstallGenerator < ::Rails::Generators::Base
       include Rails::Generators::Migration
-      source_root File.expand_path('../templates', __FILE__)
+      source_root File.expand_path("../templates", __FILE__)
       desc "Generate files for MiniScheduler"
 
       def self.next_migration_number(path)
@@ -17,7 +17,10 @@ module MiniScheduler
       end
 
       def copy_migrations
-        migration_template("create_mini_scheduler_stats.rb", "db/migrate/create_mini_scheduler_stats.rb")
+        migration_template(
+          "create_mini_scheduler_stats.rb",
+          "db/migrate/create_mini_scheduler_stats.rb",
+        )
       end
 
       def copy_initializer_file

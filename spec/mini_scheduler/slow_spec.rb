@@ -2,7 +2,6 @@
 # encoding: utf-8
 
 if ENV["SLOW"]
-
   class FastJob
     extend ::MiniScheduler::Schedule
     every 1.second
@@ -40,13 +39,10 @@ if ENV["SLOW"]
   end
 
   describe MiniScheduler::Manager do
-
     let(:redis) { Redis.new }
 
     it "can correctly operate with multiple workers" do
-      MiniScheduler.configure do |config|
-        config.redis = redis
-      end
+      MiniScheduler.configure { |config| config.redis = redis }
 
       manager = MiniScheduler::Manager.new(enable_stats: false, workers: 2)
 
@@ -69,7 +65,6 @@ if ENV["SLOW"]
 
       expect(FastJob.runs).to be > 5
       expect(SlowJob.runs).to be > 0
-
     end
   end
 end

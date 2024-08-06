@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'mini_scheduler'
-require 'active_support'
-require 'active_support/core_ext/numeric/time'
-require 'active_support/core_ext/integer/time'
-require 'mocha/api'
+require "mini_scheduler"
+require "active_support"
+require "active_support/core_ext/numeric/time"
+require "active_support/core_ext/integer/time"
+require "mocha/api"
 
 def wait_for(on_fail: nil, timeout: 1, &blk)
   i = 0

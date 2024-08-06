@@ -12,25 +12,25 @@ module MiniScheduler
         @manager = manager
         @hostname = manager.hostname
 
-        @recovery_thread = Thread.new do
-          while !@stopped
-            sleep 60
+        @recovery_thread =
+          Thread.new do
+            while !@stopped
+              sleep 60
 
-            @mutex.synchronize do
-              repair_queue
-              reschedule_orphans
-              ensure_worker_threads
+              @mutex.synchronize do
+                repair_queue
+                reschedule_orphans
+                ensure_worker_threads
+              end
             end
           end
-        end
-        @keep_alive_thread = Thread.new do
-          while !@stopped
-            @mutex.synchronize do
-              keep_alive
+        @keep_alive_thread =
+          Thread.new do
+            while !@stopped
+              @mutex.synchronize { keep_alive }
+              sleep(@manager.keep_alive_duration / 2)
             end
-            sleep(@manager.keep_alive_duration / 2)
           end
-        end
         ensure_worker_threads
       end
 
@@ -49,17 +49,21 @@ module MiniScheduler
       def reschedule_orphans
         @manager.reschedule_orphans!
       rescue => ex
-        MiniScheduler.handle_job_exception(ex, message: "Error during MiniScheduler reschedule_orphans")
+        MiniScheduler.handle_job_exception(
+          ex,
+          message: "Error during MiniScheduler reschedule_orphans",
+        )
       end
 
       def ensure_worker_threads
         @threads ||= []
         @threads.delete_if { |t| !t.alive? }
-        (@manager.workers - @threads.size).times do
-          @threads << Thread.new { worker_loop }
-        end
+        (@manager.workers - @threads.size).times { @threads << Thread.new { worker_loop } }
       rescue => ex
-        MiniScheduler.handle_job_exception(ex, message: "Error during MiniScheduler ensure_worker_threads")
+        MiniScheduler.handle_job_exception(
+          ex,
+          message: "Error during MiniScheduler ensure_worker_threads",
+        )
       end
 
       def worker_loop
@@ -69,7 +73,10 @@ module MiniScheduler
           begin
             process_queue
           rescue => ex
-            MiniScheduler.handle_job_exception(ex, message: "Error during MiniScheduler worker_loop")
+            MiniScheduler.handle_job_exception(
+              ex,
+              message: "Error during MiniScheduler worker_loop",
+            )
             break # Data could be in a bad state - stop the thread
           end
         end
@@ -84,7 +91,9 @@ module MiniScheduler
       end
 
       def set_current_worker_thread_id!
-        Thread.current[:mini_scheduler_worker_thread_id] = "#{@manager.identity_key}:thread_#{SecureRandom.alphanumeric(10)}"
+        Thread.current[
+          :mini_scheduler_worker_thread_id
+        ] = "#{@manager.identity_key}:thread_#{SecureRandom.alphanumeric(10)}"
       end
 
       def worker_thread_ids
@@ -110,18 +119,25 @@ module MiniScheduler
           @mutex.synchronize { info.write! }
 
           if @manager.enable_stats
-            stat = MiniScheduler::Stat.create!(
-              name: klass.to_s,
-              hostname: hostname,
-              pid: Process.pid,
-              started_at: Time.now,
-              live_slots_start: GC.stat[:heap_live_slots]
-            )
+            stat =
+              MiniScheduler::Stat.create!(
+                name: klass.to_s,
+                hostname: hostname,
+                pid: Process.pid,
+                started_at: Time.now,
+                live_slots_start: GC.stat[:heap_live_slots],
+              )
           end
 
           klass.new.perform
         rescue => e
-          MiniScheduler.handle_job_exception(e, message: "Error while running a scheduled job", job: { "class" => klass })
+          MiniScheduler.handle_job_exception(
+            e,
+            message: "Error while running a scheduled job",
+            job: {
+              "class" => klass,
+            },
+          )
 
           error = "#{e.class}: #{e.message} #{e.backtrace.join("\n")}"
           failed = true
@@ -135,13 +151,11 @@ module MiniScheduler
             duration_ms: duration,
             live_slots_finish: GC.stat[:heap_live_slots],
             success: !failed,
-            error: error
+            error: error,
           )
           MiniScheduler.job_ran&.call(stat)
         end
-        attempts(3) do
-          @mutex.synchronize { info.write! }
-        end
+        attempts(3) { @mutex.synchronize { info.write! } }
       ensure
         @running = false
         if defined?(ActiveRecord::Base)
@@ -163,10 +177,11 @@ module MiniScheduler
 
           enq(nil)
 
-          kill_thread = Thread.new do
-            sleep 0.5
-            @threads.each(&:kill)
-          end
+          kill_thread =
+            Thread.new do
+              sleep 0.5
+              @threads.each(&:kill)
+            end
 
           @threads.each(&:join)
           kill_thread.kill
@@ -179,29 +194,24 @@ module MiniScheduler
       end
 
       def wait_till_done
-        while !@queue.empty? && !(@queue.num_waiting > 0)
-          sleep 0.001
-        end
+        sleep 0.001 while !@queue.empty? && !(@queue.num_waiting > 0)
         # this is a hack, but is only used for test anyway
         # if tests fail that depend on this we are forced to increase it.
         sleep 0.010
-        while @running
-          sleep 0.001
-        end
+        sleep 0.001 while @running
       end
 
       def attempts(max_attempts)
         attempt = 0
         begin
           yield
-        rescue
+        rescue StandardError
           attempt += 1
           raise if attempt >= max_attempts
           sleep Random.rand
           retry
         end
       end
-
     end
 
     def self.without_runner
@@ -233,11 +243,12 @@ module MiniScheduler
     end
 
     def hostname
-      @hostname ||= begin
-                      `hostname`.strip
-                    rescue
-                      "unknown"
-                    end
+      @hostname ||=
+        begin
+          `hostname`.strip
+        rescue StandardError
+          "unknown"
+        end
     end
 
     def schedule_info(klass)
@@ -249,15 +260,11 @@ module MiniScheduler
     end
 
     def ensure_schedule!(klass)
-      lock do
-        schedule_info(klass).schedule!
-      end
+      lock { schedule_info(klass).schedule! }
     end
 
     def remove(klass)
-      lock do
-        schedule_info(klass).del!
-      end
+      lock { schedule_info(klass).del! }
     end
 
     def reschedule_orphans!
@@ -268,18 +275,20 @@ module MiniScheduler
     end
 
     def reschedule_orphans_on!(hostname = nil)
-      redis.zrange(Manager.queue_key(queue, hostname), 0, -1).each do |key|
-        klass = get_klass(key)
-        next unless klass
-        info = schedule_info(klass)
+      redis
+        .zrange(Manager.queue_key(queue, hostname), 0, -1)
+        .each do |key|
+          klass = get_klass(key)
+          next unless klass
+          info = schedule_info(klass)
 
-        if ['QUEUED', 'RUNNING'].include?(info.prev_result) &&
-          (!info.current_owner || !redis.get(info.current_owner))
-          info.prev_result = 'ORPHAN'
-          info.next_run = Time.now.to_i
-          info.write!
+          if %w[QUEUED RUNNING].include?(info.prev_result) &&
+               (!info.current_owner || !redis.get(info.current_owner))
+            info.prev_result = "ORPHAN"
+            info.next_run = Time.now.to_i
+            info.write!
+          end
         end
-      end
     end
 
     def get_klass(name)
@@ -289,10 +298,14 @@ module MiniScheduler
     end
 
     def repair_queue
-      return if redis.exists?(self.class.queue_key(queue)) ||
-        redis.exists?(self.class.queue_key(queue, hostname))
+      if redis.exists?(self.class.queue_key(queue)) ||
+           redis.exists?(self.class.queue_key(queue, hostname))
+        return
+      end
 
-      self.class.discover_schedules
+      self
+        .class
+        .discover_schedules
         .select { |schedule| schedule.queue == queue }
         .each { |schedule| ensure_schedule!(schedule) }
     end
@@ -310,9 +323,7 @@ module MiniScheduler
 
       if due.to_i <= Time.now.to_i
         klass = get_klass(key)
-        if !klass || (
-          (klass.is_per_host && !hostname) || (hostname && !klass.is_per_host)
-        )
+        if !klass || ((klass.is_per_host && !hostname) || (hostname && !klass.is_per_host))
           # corrupt key, nuke it (renamed job or something)
           redis.zrem Manager.queue_key(queue, hostname), key
           return
@@ -345,9 +356,7 @@ module MiniScheduler
 
     def keep_alive(*ids)
       ids = [identity_key, *@runner.worker_thread_ids] if ids.size == 0
-      ids.each do |identity_key|
-        redis.setex identity_key, keep_alive_duration, ""
-      end
+      ids.each { |identity_key| redis.setex identity_key, keep_alive_duration, "" }
     end
 
     def lock
@@ -388,7 +397,8 @@ module MiniScheduler
     def identity_key
       return @identity_key if @identity_key
       @@identity_key_mutex.synchronize do
-        @identity_key ||= "_scheduler_#{hostname}:#{Process.pid}:#{self.class.seq}:#{SecureRandom.hex}"
+        @identity_key ||=
+          "_scheduler_#{hostname}:#{Process.pid}:#{self.class.seq}:#{SecureRandom.hex}"
       end
     end
 
@@ -397,19 +407,11 @@ module MiniScheduler
     end
 
     def self.queue_key(queue, hostname = nil)
-      if hostname
-        "_scheduler_queue_#{queue}_#{hostname}_"
-      else
-        "_scheduler_queue_#{queue}_"
-      end
+      hostname ? "_scheduler_queue_#{queue}_#{hostname}_" : "_scheduler_queue_#{queue}_"
     end
 
     def self.schedule_key(klass, hostname = nil)
-      if hostname
-        "_scheduler_#{klass}_#{hostname}"
-      else
-        "_scheduler_#{klass}"
-      end
+      hostname ? "_scheduler_#{klass}_#{hostname}" : "_scheduler_#{klass}"
     end
   end
 end
