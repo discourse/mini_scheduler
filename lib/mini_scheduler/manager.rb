@@ -24,6 +24,7 @@ module MiniScheduler
               end
             end
           end
+
         @keep_alive_thread =
           Thread.new do
             while !@stopped
@@ -31,6 +32,7 @@ module MiniScheduler
               sleep(@manager.keep_alive_duration / 2)
             end
           end
+
         ensure_worker_threads
       end
 
@@ -69,6 +71,7 @@ module MiniScheduler
       def worker_loop
         set_current_worker_thread_id!
         keep_alive(current_worker_thread_id)
+
         while !@stopped
           begin
             process_queue
@@ -77,6 +80,7 @@ module MiniScheduler
               ex,
               message: "Error during MiniScheduler worker_loop",
             )
+
             break # Data could be in a bad state - stop the thread
           end
         end
@@ -142,6 +146,7 @@ module MiniScheduler
           error = "#{e.class}: #{e.message} #{e.backtrace.join("\n")}"
           failed = true
         end
+
         duration = ((Time.now.to_f - start) * 1000).to_i
         info.prev_duration = duration
         info.prev_result = failed ? "FAILED" : "OK"
@@ -158,6 +163,7 @@ module MiniScheduler
         attempts(3) { @mutex.synchronize { info.write! } }
       ensure
         @running = false
+
         if defined?(ActiveRecord::Base)
           ActiveRecord::Base.connection_handler.clear_active_connections!
         end
@@ -366,7 +372,9 @@ module MiniScheduler
     end
 
     def self.discover_queues
-      ObjectSpace.each_object(MiniScheduler::Schedule).map(&:queue).to_set
+      queues = Set.new
+      ObjectSpace.each_object(MiniScheduler::Schedule).each { |schedule| queues << schedule.queue }
+      queues
     end
 
     def self.discover_schedules
