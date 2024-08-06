@@ -2,11 +2,7 @@
 
 module MiniScheduler
   class ScheduleInfo
-    attr_accessor :next_run,
-                  :prev_run,
-                  :prev_duration,
-                  :prev_result,
-                  :current_owner
+    attr_accessor :next_run, :prev_run, :prev_duration, :prev_result, :current_owner
 
     def initialize(klass, manager)
       @klass = klass
@@ -25,7 +21,7 @@ module MiniScheduler
         @prev_duration = data["prev_duration"]
         @current_owner = data["current_owner"]
       end
-    rescue
+    rescue StandardError
       # corrupt redis
       @next_run = @prev_run = @prev_result = @prev_duration = @current_owner = nil
     end
@@ -40,17 +36,14 @@ module MiniScheduler
 
     def valid_every?
       return false unless @klass.every
-      !!@prev_run &&
-        @prev_run <= Time.now.to_i &&
+      !!@prev_run && @prev_run <= Time.now.to_i &&
         @next_run < @prev_run + @klass.every * (1 + @manager.random_ratio)
     end
 
     def valid_daily?
       return false unless @klass.daily
       return true if !@prev_run && @next_run && @next_run <= (Time.now + 1.day).to_i
-      !!@prev_run &&
-        @prev_run <= Time.now.to_i &&
-        @next_run < @prev_run + 1.day
+      !!@prev_run && @prev_run <= Time.now.to_i && @next_run < @prev_run + 1.day
     end
 
     def schedule_every!
@@ -63,9 +56,7 @@ module MiniScheduler
       # this can look a bit confusing, but @next_run above could be off
       # if prev_run is off, so this ensures it ends up correct and in the
       # future
-      if !valid?
-        @next_run = Time.now.to_i + 300 * Random.rand
-      end
+      @next_run = Time.now.to_i + 300 * Random.rand if !valid?
     end
 
     def schedule_daily!
@@ -96,13 +87,14 @@ module MiniScheduler
 
     def write!
       clear!
-      redis.set key, {
-        next_run: @next_run,
-        prev_run: @prev_run,
-        prev_duration: @prev_duration,
-        prev_result: @prev_result,
-        current_owner: @current_owner
-      }.to_json
+      redis.set key,
+                {
+                  next_run: @next_run,
+                  prev_run: @prev_run,
+                  prev_duration: @prev_duration,
+                  prev_result: @prev_result,
+                  current_owner: @current_owner,
+                }.to_json
 
       redis.zadd queue_key, @next_run.to_s, @klass.to_s if @next_run
     end
@@ -133,10 +125,10 @@ module MiniScheduler
     end
 
     private
+
     def clear!
       redis.del key
       redis.zrem queue_key, @klass.to_s
     end
-
   end
 end

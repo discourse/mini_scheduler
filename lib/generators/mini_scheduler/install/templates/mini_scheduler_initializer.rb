@@ -38,7 +38,5 @@ MiniScheduler.configure do |config|
 end
 
 if Sidekiq.server? && defined?(Rails)
-  Rails.application.config.after_initialize do
-    MiniScheduler.start
-  end
+  Rails.application.config.after_initialize { MiniScheduler.start }
 end

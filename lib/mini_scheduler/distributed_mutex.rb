@@ -2,7 +2,8 @@
 
 module MiniScheduler
   class DistributedMutex
-    class Timeout < StandardError; end
+    class Timeout < StandardError
+    end
 
     @default_redis = nil
 
@@ -15,7 +16,7 @@ module MiniScheduler
     end
 
     def initialize(key, redis)
-      raise ArgumentError.new('redis argument is nil') if redis.nil?
+      raise ArgumentError.new("redis argument is nil") if redis.nil?
       @key = key
       @redis = redis
       @mutex = Mutex.new
@@ -32,7 +33,6 @@ module MiniScheduler
       attempts = 0
       sleep_duration = BASE_SLEEP_DURATION
       while !try_to_get_lock
-
         sleep(sleep_duration)
 
         if sleep_duration < MAX_SLEEP_DURATION
@@ -44,7 +44,6 @@ module MiniScheduler
       end
 
       yield
-
     ensure
       @redis.del @key
       @mutex.unlock
@@ -62,9 +61,7 @@ module MiniScheduler
           @redis.watch @key
           time = @redis.get @key
           if time && time.to_i < Time.now.to_i
-            got_lock = @redis.multi do
-              @redis.set @key, Time.now.to_i + 60
-            end
+            got_lock = @redis.multi { @redis.set @key, Time.now.to_i + 60 }
           end
         ensure
           @redis.unwatch
@@ -73,7 +70,5 @@ module MiniScheduler
 
       got_lock
     end
-
   end
-
 end

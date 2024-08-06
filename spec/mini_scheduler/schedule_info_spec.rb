@@ -2,19 +2,12 @@
 # encoding: utf-8
 
 describe MiniScheduler::ScheduleInfo do
-
   let(:manager) { MiniScheduler::Manager.new }
   let(:redis) { Redis.new }
 
-  before do
-    MiniScheduler.configure do |config|
-      config.redis = redis
-    end
-  end
+  before { MiniScheduler.configure { |config| config.redis = redis } }
 
-  after do
-    manager.stop!
-  end
+  after { manager.stop! }
 
   describe "every" do
     class RandomJob
@@ -41,31 +34,30 @@ describe MiniScheduler::ScheduleInfo do
       expect(RandomJob).to be_scheduled
     end
 
-    it 'starts off invalid' do
+    it "starts off invalid" do
       expect(@info.valid?).to eq(false)
     end
 
-    it 'will have a due date in the next 5 minutes if it was blank' do
+    it "will have a due date in the next 5 minutes if it was blank" do
       @info.schedule!
       expect(@info.valid?).to eq(true)
       expect(@info.next_run).to be_within(5.minutes).of(Time.now.to_i)
     end
 
-    it 'will have a due date within the next hour if it just ran' do
+    it "will have a due date within the next hour if it just ran" do
       @info.prev_run = Time.now.to_i
       @info.schedule!
       expect(@info.valid?).to eq(true)
       expect(@info.next_run).to be_within(1.hour * manager.random_ratio).of(Time.now.to_i + 1.hour)
     end
 
-    it 'is invalid if way in the future' do
+    it "is invalid if way in the future" do
       @info.next_run = Time.now.to_i + 1.year
       expect(@info.valid?).to eq(false)
     end
   end
 
   describe "daily" do
-
     class DailyJob
       extend ::MiniScheduler::Schedule
       daily at: 11.hours
@@ -98,16 +90,16 @@ describe MiniScheduler::ScheduleInfo do
       expect(@info.next_run).to eq(nil)
       @info.schedule!
 
-      expect(JSON.parse(redis.get(@info.key))["next_run"].to_i)
-        .to eq((Time.now.midnight + 11.hours).to_i)
+      expect(JSON.parse(redis.get(@info.key))["next_run"].to_i).to eq(
+        (Time.now.midnight + 11.hours).to_i,
+      )
 
       expect(@info.valid?).to eq(true)
     end
 
-    it 'is invalid if way in the future' do
+    it "is invalid if way in the future" do
       @info.next_run = Time.now.to_i + 1.year
       expect(@info.valid?).to eq(false)
     end
   end
-
 end
