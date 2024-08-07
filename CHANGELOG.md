@@ -1,3 +1,8 @@
+# 0.17.0 - 2024-08-06
+
+- Add `MiniScheduler::Manager.discover_running_scheduled_jobs` API to allow running scheduled jobs to easily be discovered on the
+  current host.
+
 # 0.16.0 - 2023-05-17
 
 - Support Redis gem version 5
@@ -14,7 +19,7 @@
 # 0.13.0 - 2020-11-30
 
 - Fix exception code so it has parity with Sidekiq 4.2.3 and up, version bump cause
-minimum version of Sikekiq changed.
+  minimum version of Sikekiq changed.
 
 # 0.12.3 - 2020-10-15
 
@@ -35,7 +40,7 @@ minimum version of Sikekiq changed.
 # 0.11.0 - 2019-06-24
 
 - Correct situation where distributed mutex could end in a tight loop when
- redis could not be contacted
+  redis could not be contacted
 
 # 0.9.2 - 2019-04-26
 
