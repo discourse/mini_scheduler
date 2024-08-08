@@ -32,6 +32,17 @@ describe MiniScheduler::Manager do
       end
     end
 
+    class SuperLongPerHostJob
+      extend ::MiniScheduler::Schedule
+
+      per_host
+      every 20.minutes
+
+      def perform
+        sleep 1000
+      end
+    end
+
     class PerHostJob
       extend ::MiniScheduler::Schedule
 
@@ -77,11 +88,16 @@ describe MiniScheduler::Manager do
   end
 
   after do
-    manager.stop!
-    manager.remove(Testing::RandomJob)
-    manager.remove(Testing::SuperLongJob)
-    manager.remove(Testing::PerHostJob)
-    manager.remove(Testing::FailingJob)
+    ObjectSpace
+      .each_object(described_class)
+      .each do |manager|
+        manager.stop!
+        manager.remove(Testing::RandomJob)
+        manager.remove(Testing::SuperLongJob)
+        manager.remove(Testing::PerHostJob)
+        manager.remove(Testing::FailingJob)
+        manager.remove(Testing::SuperLongPerHostJob)
+      end
 
     # connections that are not in use must be removed
     # otherwise active record gets super confused
@@ -309,6 +325,67 @@ describe MiniScheduler::Manager do
   describe "#discover_schedules" do
     it "Discovers Testing::RandomJob" do
       expect(MiniScheduler::Manager.discover_schedules).to include(Testing::RandomJob)
+    end
+  end
+
+  describe ".discover_running_scheduled_jobs" do
+    let(:manager_1) { MiniScheduler::Manager.new(enable_stats: false) }
+    let(:manager_2) { MiniScheduler::Manager.new(enable_stats: false) }
+
+    before do
+      freeze_time
+
+      info = manager_1.schedule_info(Testing::SuperLongJob)
+      info.next_run = Time.now.to_i - 1
+      info.write!
+
+      manager_1.tick
+
+      info = manager_2.schedule_info(Testing::SuperLongPerHostJob)
+      info.next_run = Time.now.to_i - 1
+      info.write!
+
+      manager_2.tick
+
+      wait_for do
+        manager_1.schedule_info(Testing::SuperLongJob).prev_result == "RUNNING" &&
+          manager_2.schedule_info(Testing::SuperLongPerHostJob).prev_result == "RUNNING"
+      end
+    end
+
+    after do
+      manager_1.stop!
+      manager_2.stop!
+    end
+
+    it "returns running jobs on current host" do
+      jobs = described_class.discover_running_scheduled_jobs
+
+      expect(jobs.size).to eq(2)
+
+      super_long_job = jobs.find { |job| job[:class] == Testing::SuperLongJob }
+
+      expect(super_long_job.keys).to eq(%i[class started_at thread_id])
+      expect(super_long_job[:started_at]).to be_within(1).of(Time.now)
+      expect(super_long_job[:thread_id]).to start_with("_scheduler_#{manager.hostname}")
+
+      expect(
+        Thread.list.find do |thread|
+          thread[:mini_scheduler_worker_thread_id] == super_long_job[:thread_id]
+        end,
+      ).to be_truthy
+
+      super_long_per_host_job = jobs.find { |job| job[:class] == Testing::SuperLongPerHostJob }
+
+      expect(super_long_per_host_job.keys).to eq(%i[class started_at thread_id])
+      expect(super_long_per_host_job[:started_at]).to be_within(1).of(Time.now)
+      expect(super_long_per_host_job[:thread_id]).to start_with("_scheduler_#{manager.hostname}")
+
+      expect(
+        Thread.list.find do |thread|
+          thread[:mini_scheduler_worker_thread_id] == super_long_per_host_job[:thread_id]
+        end,
+      ).to be_truthy
     end
   end
 

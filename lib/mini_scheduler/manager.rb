@@ -106,6 +106,7 @@ module MiniScheduler
 
       def process_queue
         klass = @queue.deq
+
         # hack alert, I need to both deq and set @running atomically.
         @running = true
 
@@ -249,12 +250,7 @@ module MiniScheduler
     end
 
     def hostname
-      @hostname ||=
-        begin
-          `hostname`.strip
-        rescue StandardError
-          "unknown"
-        end
+      @hostname ||= self.class.hostname
     end
 
     def schedule_info(klass)
@@ -391,6 +387,73 @@ module MiniScheduler
         end
       end
       schedules
+    end
+
+    def self.hostname
+      @hostname ||=
+        begin
+          require "socket"
+          Socket.gethostname
+        rescue => e
+          begin
+            `hostname`.strip
+          rescue => e
+            "unknown_host"
+          end
+        end
+    end
+
+    # Discover running scheduled jobs on the current host.
+    #
+    # @example
+    #
+    #   MiniScheduler::Manager.discover_running_scheduled_jobs
+    #
+    # @return [Array<Hash>] an array of hashes representing the running scheduled jobs.
+    # @option job [Class] :class The class of the scheduled job.
+    # @option job [Time] :started_at The time when the scheduled job started.
+    # @option job [String] :thread_id The ID of the worker thread running the job.
+    #   The thread can be identified by matching the `:mini_scheduler_worker_thread_id` thread variable with the ID.
+    def self.discover_running_scheduled_jobs
+      hostname = self.hostname
+
+      schedule_keys =
+        discover_schedules.reduce({}) do |acc, klass|
+          acc[klass] = if klass.is_per_host
+            self.schedule_key(klass, hostname)
+          else
+            self.schedule_key(klass)
+          end
+
+          acc
+        end
+
+      running_scheduled_jobs = []
+
+      schedule_keys
+        .keys
+        .zip(MiniScheduler.redis.mget(*schedule_keys.values))
+        .each do |scheduled_job_class, scheduled_job_info|
+          next if scheduled_job_info.nil?
+
+          parsed =
+            begin
+              JSON.parse(scheduled_job_info, symbolize_names: true)
+            rescue JSON::ParserError
+              nil
+            end
+
+          next if parsed.nil?
+          next if parsed[:prev_result] != "RUNNING"
+
+          running_scheduled_jobs << {
+            class: scheduled_job_class,
+            started_at: Time.at(parsed[:prev_run]),
+            thread_id: parsed[:current_owner],
+          }
+        end
+
+      running_scheduled_jobs
     end
 
     @class_mutex = Mutex.new
