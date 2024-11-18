@@ -5,6 +5,7 @@ require "mini_scheduler/schedule_info"
 require "mini_scheduler/manager"
 require "mini_scheduler/distributed_mutex"
 require "sidekiq"
+require "redis"
 
 begin
   require "sidekiq/exception_handler"
@@ -16,26 +17,23 @@ module MiniScheduler
     yield self
   end
 
-  class SidekiqExceptionHandler
-    if defined?(Sidekiq::ExceptionHandler)
-      extend Sidekiq::ExceptionHandler
-    else
-      def self.handle_exception(exception, context)
-        Sidekiq.handle_exception(exception, context)
-      end
+  SidekiqExceptionHandler =
+    if defined?(Sidekiq.default_configuration) # Sidekiq 7+
+      ->(ex, ctx, _config = nil) { Sidekiq.default_configuration.handle_exception(ex, ctx) }
+    else # Sidekiq 6.5
+      ->(ex, ctx, _config = nil) { Sidekiq.handle_exception(ex, ctx) }
     end
-  end
 
   def self.job_exception_handler(&blk)
     @job_exception_handler = blk if blk
     @job_exception_handler
   end
 
-  def self.handle_job_exception(ex, context = {})
+  def self.handle_job_exception(ex, context = {}, _config = nil)
     if job_exception_handler
       job_exception_handler.call(ex, context)
     else
-      SidekiqExceptionHandler.handle_exception(ex, context)
+      SidekiqExceptionHandler.call(ex, context)
     end
   end
 

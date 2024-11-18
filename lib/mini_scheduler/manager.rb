@@ -394,10 +394,10 @@ module MiniScheduler
         begin
           require "socket"
           Socket.gethostname
-        rescue => e
+        rescue StandardError
           begin
             `hostname`.strip
-          rescue => e
+          rescue StandardError
             "unknown_host"
           end
         end
