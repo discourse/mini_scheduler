@@ -1,5 +1,6 @@
-# next
+# 0.18.0 - 2024-12-20
 
+- Add support for Sidekiq 7+
 - Remove support for Sidekiq < 6.5
 - Update minimum Ruby version to 3.0
 
