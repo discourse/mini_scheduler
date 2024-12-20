@@ -15,12 +15,12 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/discourse/mini_scheduler"
   spec.license = "MIT"
 
-  spec.required_ruby_version = ">= 2.7.0"
+  spec.required_ruby_version = ">= 3.0.0"
 
   spec.files = `git ls-files`.split($/).reject { |s| s =~ /^(spec|\.)/ }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "sidekiq", ">= 4.2.3", "< 7.0"
+  spec.add_runtime_dependency "sidekiq", ">= 6.5", "< 8.0"
 
   spec.add_development_dependency "pg", "~> 1.0"
   spec.add_development_dependency "activesupport", "~> 7.0"

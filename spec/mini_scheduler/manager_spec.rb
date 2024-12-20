@@ -409,16 +409,19 @@ describe MiniScheduler::Manager do
 
     def expect_job_failure(ex, ctx)
       expect(ex).to be_kind_of ZeroDivisionError
-      expect(ctx).to match(
-        { message: "Error while running a scheduled job", job: { "class" => Testing::FailingJob } },
-      )
+      expect(ctx).to match a_hash_including(
+              message: "Error while running a scheduled job",
+              job: {
+                "class" => Testing::FailingJob,
+              },
+            )
     end
 
     context "with default handler" do
       class TempSidekiqLogger
         attr_accessor :exception, :context
 
-        def call(ex, ctx)
+        def call(ex, ctx, _config = nil)
           self.exception = ex
           self.context = ctx
         end
@@ -426,9 +429,17 @@ describe MiniScheduler::Manager do
 
       let(:logger) { TempSidekiqLogger.new }
 
-      before { Sidekiq.error_handlers << logger }
+      let(:error_handlers) do
+        if defined?(Sidekiq.default_configuration)
+          Sidekiq.default_configuration.error_handlers
+        else
+          Sidekiq.error_handlers
+        end
+      end
 
-      after { Sidekiq.error_handlers.delete(logger) }
+      before { error_handlers << logger }
+
+      after { error_handlers.delete(logger) }
 
       it "captures failed jobs" do
         manager.blocking_tick
@@ -438,7 +449,9 @@ describe MiniScheduler::Manager do
     end
 
     context "with custom handler" do
-      before { MiniScheduler.job_exception_handler { |ex, ctx| expect_job_failure(ex, ctx) } }
+      before do
+        MiniScheduler.job_exception_handler { |ex, ctx, _config = nil| expect_job_failure(ex, ctx) }
+      end
 
       after { MiniScheduler.instance_variable_set :@job_exception_handler, nil }
 

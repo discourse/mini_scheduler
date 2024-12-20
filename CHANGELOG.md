@@ -1,3 +1,8 @@
+# next
+
+- Remove support for Sidekiq < 6.5
+- Update minimum Ruby version to 3.0
+
 # 0.17.0 - 2024-08-06
 
 - Add `MiniScheduler::Manager.discover_running_scheduled_jobs` API to allow running scheduled jobs to easily be discovered on the
