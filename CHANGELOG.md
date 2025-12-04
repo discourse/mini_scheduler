@@ -1,4 +1,4 @@
-# Unreleased 
+# 0.19.0 - 2025-12-04
 
 - Fix race condition in `MiniScheduler::Manager`
 
