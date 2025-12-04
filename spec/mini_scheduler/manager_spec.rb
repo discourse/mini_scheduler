@@ -460,4 +460,11 @@ describe MiniScheduler::Manager do
       end
     end
   end
+
+  describe "#keep_alive" do
+    it "does not raise an error when `skip_runner` is true" do
+      manager = MiniScheduler::Manager.new(enable_stats: false, skip_runner: true)
+      expect { manager.keep_alive }.not_to raise_error
+    end
+  end
 end

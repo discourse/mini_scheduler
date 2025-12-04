@@ -28,8 +28,8 @@ module MiniScheduler
         @keep_alive_thread =
           Thread.new do
             while !@stopped
-              @mutex.synchronize { keep_alive }
               sleep(@manager.keep_alive_duration / 2)
+              @mutex.synchronize { keep_alive }
             end
           end
 
@@ -348,7 +348,7 @@ module MiniScheduler
     end
 
     def stop!
-      @runner.stop!
+      @runner&.stop!
       self.class.current.delete(@queue)
     end
 
@@ -357,7 +357,7 @@ module MiniScheduler
     end
 
     def keep_alive(*ids)
-      ids = [identity_key, *@runner.worker_thread_ids] if ids.size == 0
+      ids = [identity_key, *@runner&.worker_thread_ids] if ids.size == 0
       ids.each { |identity_key| redis.setex identity_key, keep_alive_duration, "" }
     end
 
