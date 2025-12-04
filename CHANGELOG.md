@@ -1,3 +1,7 @@
+# Unreleased 
+
+- Fix race condition in `MiniScheduler::Manager`
+
 # 0.18.0 - 2024-12-20
 
 - Add support for Sidekiq 7+
