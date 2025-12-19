@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pg", "~> 1.0"
   spec.add_development_dependency "activesupport", "~> 7.0"
   spec.add_development_dependency "rspec", "~> 3.0"
-  spec.add_development_dependency "mocha", "~> 2.0"
+  spec.add_development_dependency "mocha", "~> 3.0"
   spec.add_development_dependency "guard", "~> 2.0"
   spec.add_development_dependency "guard-rspec", "~> 4.0"
   spec.add_development_dependency "redis", ">= 4.0"
