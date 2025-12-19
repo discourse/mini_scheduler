@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup ruby
         uses: ruby/setup-ruby@v1
@@ -48,7 +48,7 @@ jobs:
       BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/sidekiq-${{ matrix.sidekiq }}.gemfile
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup ruby
         uses: ruby/setup-ruby@v1
@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Release Gem
         uses: discourse/publish-rubygems-action@v3
