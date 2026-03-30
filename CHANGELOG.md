@@ -1,3 +1,10 @@
+# unreleased
+
+- Add support for Sidekiq 8.0, 8.1
+- Add Ruby 3.4, 4.0 to CI pipeline
+- Add DragonflyDB to test matrix
+- Update minimum Ruby version to 3.2
+
 # 0.19.0 - 2025-12-04
 
 - Fix race condition in `MiniScheduler::Manager`

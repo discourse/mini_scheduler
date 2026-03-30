@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup ruby
         uses: ruby/setup-ruby@v1
@@ -28,27 +28,33 @@ jobs:
           bundle exec stree check Gemfile $(git ls-files '*.rb') $(git ls-files '*.rake') $(git ls-files '*.thor')
 
   test:
-    name: Ruby ${{ matrix.ruby }}, Sidekiq ${{ matrix.sidekiq }}, ${{ matrix.redis }}
+    name: Ruby ${{ matrix.ruby }}, Sidekiq ${{ matrix.sidekiq }}, ${{ matrix.redis.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     services:
       redis:
-        image: ${{ matrix.redis }}
+        image: ${{ matrix.redis.image }}:${{ matrix.redis.version }}
         ports:
           - 6379:6379
 
     strategy:
       matrix:
-        ruby:    ["3.0", "3.1", "3.2", "3.3"]
-        redis:   ["redis", "valkey/valkey"]
-        sidekiq: ["6.5", "7.0", "7.1", "7.2", "7.3"]
+        ruby:    ["3.2", "3.3", "3.4", "4.0"]
+        redis:   [
+          { name: "redis/7",          image: "redis",         version: "7" },
+          { name: "redis/latest",     image: "redis",         version: "latest" },
+          { name: "valkey/7",         image: "valkey/valkey", version: "7" },
+          { name: "valkey/latest",    image: "valkey/valkey", version: "latest" },
+          { name: "dragonfly/latest", image: "docker.dragonflydb.io/dragonflydb/dragonfly", version: "latest" },
+        ]
+        sidekiq: ["6.5", "7.0", "7.1", "7.2", "7.3", "8.0", "8.1"]
 
     env:
       BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/sidekiq-${{ matrix.sidekiq }}.gemfile
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup ruby
         uses: ruby/setup-ruby@v1
@@ -65,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Release Gem
         uses: discourse/publish-rubygems-action@v3
