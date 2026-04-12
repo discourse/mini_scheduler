@@ -5,6 +5,7 @@ require "active_support"
 require "active_support/core_ext/numeric/time"
 require "active_support/core_ext/integer/time"
 require "mocha/api"
+require "redis" # TODO: migrate to redis-client when removing support for Sidekiq 6.5
 
 def wait_for(on_fail: nil, timeout: 1, &blk)
   i = 0
