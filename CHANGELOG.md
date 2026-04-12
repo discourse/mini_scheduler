@@ -1,3 +1,7 @@
+# Unreleased
+
+- Fix `MiniScheduler::Web` integration in Sidekiq 8+
+
 # 0.19.0 - 2026-03-30
 
 - Fix race condition in `MiniScheduler::Manager`
