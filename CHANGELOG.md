@@ -1,4 +1,4 @@
-# Unreleased
+# 0.20.0 - 2026-05-13
 
 - Fix `MiniScheduler::Web` integration in Sidekiq 8+
 - Move `redis` import to specs, host application won't need to explicitly
