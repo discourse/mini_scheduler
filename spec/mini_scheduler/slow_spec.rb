@@ -22,7 +22,7 @@ if ENV["SLOW"]
 
   class SlowJob
     extend ::MiniScheduler::Schedule
-    every 5.second
+    every 5.seconds
 
     def self.runs=(val)
       @runs = val

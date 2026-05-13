@@ -22,9 +22,9 @@ module MiniScheduler
       @mutex = Mutex.new
     end
 
-    MAX_POLLING_ATTEMPTS ||= 60
-    BASE_SLEEP_DURATION ||= 0.001
-    MAX_SLEEP_DURATION ||= 1
+    MAX_POLLING_ATTEMPTS = 60
+    BASE_SLEEP_DURATION = 0.001
+    MAX_SLEEP_DURATION = 1
 
     # NOTE wrapped in mutex to maintain its semantics
     def synchronize
