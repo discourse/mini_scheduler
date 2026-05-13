@@ -5,7 +5,6 @@ require "mini_scheduler/schedule_info"
 require "mini_scheduler/manager"
 require "mini_scheduler/distributed_mutex"
 require "sidekiq"
-require "redis"
 
 begin
   require "sidekiq/exception_handler"

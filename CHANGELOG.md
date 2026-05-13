@@ -1,3 +1,10 @@
+# Unreleased
+
+- Fix `MiniScheduler::Web` integration in Sidekiq 8+
+- Move `redis` import to specs, host application won't need to explicitly
+  declare an otherwise unnecessary dependency (Sidekiq already migrated
+  to `redis-client` in v7.0)
+
 # 0.19.0 - 2026-03-30
 
 - Fix race condition in `MiniScheduler::Manager`
