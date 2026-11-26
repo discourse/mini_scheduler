@@ -49,7 +49,7 @@ module MiniScheduler
         @schedules.sort_by!(&:to_s)
         @scheduler_stats = Stat.order("started_at desc")
 
-        @filter = params[:filter]
+        @filter = request.params["filter"]
         names = @schedules.map(&:to_s)
         @filter = nil if !names.include?(@filter)
         @scheduler_stats = @scheduler_stats.where(name: @filter) if @filter
@@ -59,7 +59,8 @@ module MiniScheduler
       end
 
       app.post "/scheduler/:name/trigger" do
-        halt 404 unless (name = params[:name])
+        # Sidekiq 8 dropped route params from `params`, and `route_params(:name)` needs 7.3+
+        halt 404 unless (name = env["rack.route_params"][:name])
 
         MiniScheduler.before_sidekiq_web_request&.call
 

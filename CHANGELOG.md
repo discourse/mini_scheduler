@@ -1,3 +1,8 @@
+# Unreleased
+
+- Fix "Trigger" button (404) and history filter (ignored) in
+  `MiniScheduler::Web` on Sidekiq 8+
+
 # 0.20.0 - 2026-05-13
 
 - Fix `MiniScheduler::Web` integration in Sidekiq 8+
